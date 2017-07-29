@@ -6,13 +6,10 @@
 
 #define OPCODES_TABLE_LENGTH sizeof(opcodes_table)/sizeof(opcodes_table[0])
 
-char *line[200];
-char *current_word; 
-
 
 /* get_next_line -
  receives: a pointer of type FILE,
- and gets the next line of the file fd points to. */
+ and gets the next line of the file fd points to. 
 int get_next_line(FILE *fd)
 {
 	if(fgets(line,200,fd))
@@ -20,6 +17,16 @@ int get_next_line(FILE *fd)
 	else
 		return 0;
 
+}
+*/
+
+/* is_current_word_empty - 
+ receives: the current word obtained from list. 
+ returns: 1 if the word is empty, 0 if not.
+ NOTE: The used of this function is in order to handle empty spaces or tabs between words in the line from the source file. */ 
+int is_current_word_empty(char *current_word)
+{
+	return strlen(current_word) == 0 ? 1 : 0;
 }
 
 /* get_next_word - 
@@ -39,17 +46,14 @@ int get_next_word(char *current_word, char *line, int last_position)
 			position++;
 		}
 	current_word[i] = '\0';	
-	return i;
+
+	if(is_current_word_empty(current_word)
+		position = get_next_word(current_word, line, position);
+
+	return position;
 }
 
-/* is_current_word_empty - 
- receives: the current word obtained from list. 
- returns: 1 if the word is empty, 0 if not.
- NOTE: The used of this function is in order to handle empty spaces or tabs between words in the line from the source file. */ 
-int is_current_word_empty(char *current_word)
-{
-	return strlen(current_word) == 0 ? 1 : 0;
-}
+
 
 /* is_symbol - 
  receives: the current word to parse,
@@ -187,9 +191,50 @@ int is_existing_opcode(char *current_word)
 	}
 	
 	return 0;
-
 }
 
+/* To complete: 
+a) detect the type of data to convert to data table -> validate following input -> convert -> add line to data table\list.
+b) detect the type of opcode -> validate following input -> convert -> add line to code table\list. */
 
+void execute_first_pass(FILE *fd)
+{
+	
+	char *line[200];
+	char *current_word; 
+	char *current_symbol;
+	
+	int last_position;
+	
+
+	while(fgets(line,200,fd))
+	{
+		last_position = get_next_word(current_word, line, -1);
+
+		/* if(is_current_word_empty(current_word)) {
+		do {
+			last_position = get_next_word(current_word, line, last_position);
+
+		} while (is_current_word_empty(current_word)); 
+		*/
+	
+		if(is_symbol(current_word)) {
+			strcpy(current_symbol,current_word);
+			last_position = get_next_word(current_word,line,last_position);
+		}
+	
+		
+		
+
+		
+			
+
+	
+
+	
+
+
+
+}
 
 
