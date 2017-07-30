@@ -6,6 +6,10 @@
 
 #define OPCODES_TABLE_LENGTH sizeof(opcodes_table)/sizeof(opcodes_table[0])
 
+char *line[200];
+char *current_word; 
+char *current_symbol;
+int last_position;
 
 /* get_next_line -
  receives: a pointer of type FILE,
@@ -100,8 +104,18 @@ int is_extern_or_entry_command(char *current_word)
 	
 	current_word[strlen(current_word)-1] = '\0'; /* in order to strcmp to be accurate */
 	   
-	if (strcmp(current_word, "extern") == 0 || strcmp(current_word, "mat") == 0 || strcmp(current_word, "string") == 0) 
+	if (strcmp(current_word, "extern") == 0 || strcmp(current_word, "entry") == 0) 
 		return 1;
+
+}
+
+/* is_extern -
+ receives: the current word after we detected it is "extern" or "entry",
+ returns: 1 if it's "extern", 0 if not. 
+*/
+int is_extern(char *current_word)
+{
+	return (strcmp(current_word, "extern") == 0 ? 1 : 0);
 
 }
 
@@ -145,8 +159,12 @@ symbol_line* add_to_symbol_table(symbol_line *tail, char* current_symbol, int ad
 	new_symbol->is_extern = is_extern;
 	new_symbol->symbol_type = symbol_type; 
 
-	tail->next = new_symbol;
-	tail = tail->next;
+	if(!tail)
+		tail = new_symbol;
+	else {
+		tail->next = new_symbol;
+		tail = tail->next;
+	}
 
 	return tail;
 
@@ -154,7 +172,7 @@ symbol_line* add_to_symbol_table(symbol_line *tail, char* current_symbol, int ad
 
 /* add_to_memory_table - 
  receives: the last line in the memory table, a pointer to the bits to add, and the number of DC / IC of the word.
- This function allocates a new memory_word and add to the memory table that is the data memory table, or to the code memory table - it depends which table's
+ This function allocates a new memory_word and add to the memory table that is the DATA MEMORY table, or to the CODE MEMORY table - it depends which table's
  tail is passed. 
  returns: the last added memory word. */
 memory_word* add_to_memory_table(memory_word *tail, char *bits, int counter)
@@ -171,8 +189,12 @@ memory_word* add_to_memory_table(memory_word *tail, char *bits, int counter)
 							copies the '\0' as well) */
 	new_memory_word->counter = counter;
 
-	tail->next = new_memory_word;
-	tail = tail->next;
+	if(!tail)
+		tail = new_memory_word;
+	else {
+		tail->next = new_memory_word;
+		tail = tail->next;
+	}
 
 	return tail;
 }
@@ -199,17 +221,24 @@ b) detect the type of opcode -> validate following input -> convert -> add line 
 
 void execute_first_pass(FILE *fd)
 {
-	
-	char *line[200];
+	int is_symbol;
+	int line_number = 0;
+	int IC = 100; 
+	int DC = 0;
+	symbol_line *tail = NULL;
+		
+	/* char *line[200];
 	char *current_word; 
 	char *current_symbol;
-	
 	int last_position;
-	
+	*/
 
 	while(fgets(line,200,fd))
-	{
+	{	
+		line_number++;
+		is_symbol = 0;
 		last_position = get_next_word(current_word, line, -1);
+		
 
 		/* if(is_current_word_empty(current_word)) {
 		do {
@@ -218,10 +247,74 @@ void execute_first_pass(FILE *fd)
 		} while (is_current_word_empty(current_word)); 
 		*/
 	
-		if(is_symbol(current_word)) {
+		if(is_symbol(current_word)) {  /* if so, set is_symbol to 1, copy it to current_symbol and get the next word 
+							into current_word */
+			is_symbol = 1; 			
 			strcpy(current_symbol,current_word);
 			last_position = get_next_word(current_word,line,last_position);
+		/* call to a function that validates THE WORD ISN'T A SAVED WORD in the language */ 					
 		}
+
+		if(is_store_command(current_word)) {
+
+			if(!symbol_exists(current_symbol)) {
+				
+				symbol_tail = add_to_symbol_table(tail, current_symbol, DC, 0, DATA);
+				/* TO COMPLETE a: recognize the symbol data type and code it to DATA MEMORY table */
+				
+			}
+			else	{ 
+			fprintf(stderr, "Error in line %d - the symbol %s already exists in symbol tables\n", line_number, 						current_symbol);
+			
+
+			continue;   /* get next line after if... else... */
+		}
+
+		else { /* if current word is not a store command */
+		
+			if(is_extern_or_entry_command(current_word)) {
+	
+				if (is_extern(current_word)) {
+				
+					if (is_symbol)
+						fprintf(stderr, "Warning in line %d - the line has a symbol before \"extern\"\n", 							line_number);
+
+					else {	
+					     	last_position = get_next_word(current_word,line,last_position);		
+				/* call to a function that validates THE WORD ISN'T A SAVED WORD in the language */
+					        symbol_tail = add_to_symbol_table(tail, current_word, -999, 1, NONE);
+
+					}
+				}
+
+			else	{  /* if is not a command */
+			
+				if(!symbol_exists(current_symbol)) {
+				
+				symbol_tail = add_to_symbol_table(tail, current_symbol, IC, 0, CODE);
+				/* TO COMPLETE b: find the word after the symbol in the opcodes table and code it to CODE MEMORY 						table */
+				}
+				else
+				fprintf(stderr, "Error in line %d - the symbol %s already exists in symbol tables\n",line_number, 						current_symbol);
+				
+			}
+
+	}		 
+		
+}
+				
+			
+			
+
+
+		
+
+		
+
+
+
+
+
 	
 		
 		
