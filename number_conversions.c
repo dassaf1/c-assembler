@@ -16,6 +16,7 @@ s4_strage_entry s4t [] = {
 	{3, "d"}
 };
 
+/* Converts a digit to a strange 4 character */
 char * digit_to_char_strange_4(int digit){
     int i;
     for (i=0; i<STRANGE_4_TABLE_SIZE; i++){
@@ -27,23 +28,37 @@ char * digit_to_char_strange_4(int digit){
     return '\0';
 }
 
+/* Converts a decimal number to any other base. */
 int convert_dec_to_another_base(int number,int base){
     if(number == 0 || base==10)
         return number;
     return (number % base) + 10*convert_dec_to_another_base(number / base, base);
 }
 
-char * convert_base_4_to_base_4_strange(int num){
-    char dest[4] = "";
+/* Helper function to convert_base_4_to_base_4_strange. */
+void convert_base_4_to_base_4_strange_internal(int num, char * result){
     if (num < 10 && num >= 0) {
-        return digit_to_char_strange_4(num);
+        strcat(result, digit_to_char_strange_4(num));
+        return;
     }
-    strcpy(dest, convert_base_4_to_base_4_strange(num / 10));
-    printf("dest: %s\n", dest);
-    return strcat(dest, digit_to_char_strange_4(num % 10));
+    convert_base_4_to_base_4_strange_internal(num / 10, result);
+    strcat(result, digit_to_char_strange_4(num % 10));
 }
 
-int main() {
-    printf("answer: %s\n", convert_base_4_to_base_4_strange(123));
-    return 0;
+/* converts a number in base 4 to a number in base 4 strange. */
+char * convert_base_4_to_base_4_strange(int num){
+    char * result = (char *)malloc(sizeof(char)*5);
+    int i = num;
+    int digits = 0;
+    while (i != 0) {
+        i = i / 10;
+        digits++;
+    }
+    if (digits > 4) {
+        printf("Max number of digits supported in base 4 strange are 4\n");
+        return "\0";
+    }
+    convert_base_4_to_base_4_strange_internal(num, result);
+    result[digits] = '\0';
+    return result;
 }
