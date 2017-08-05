@@ -467,14 +467,14 @@ void execute_first_pass(FILE *fd)
 				if(current_sentence->is_action)				
 					increase_IC_according_sentence(current_sentence);
 			} 
-	}
-			
-			/* updating the DC address of each entry in symbol_table with the IC offset, only when 
-				the symbol is of DATA type */
-			increase_DC_symbol_address_by_IC_offset();
-			
+		}
+			free(current_sentence);			
 	
 	}
+			/* updating the DC address of each entry in symbol_table with the IC offset, only when 
+													the symbol is of DATA type */
+			increase_DC_symbol_address_by_IC_offset();
+			
 }
 
 
