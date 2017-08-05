@@ -51,7 +51,7 @@ typedef struct sentence {
 	int guidance_command; /* enum: EXTERN / ENTRY / NUM (=DATA)  / STRING / MAT */
 	int is_symbol; 
 	char* symbol;
-	char* opcode;
+	char* opcode[5];
 	int num_of_operands;
 	char source_operand_type[3]; /* 3 places so '\0' can be added */
 	char dest_operand_type[3];   /* 3 places so '\0' can be added */	
