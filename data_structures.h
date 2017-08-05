@@ -1,17 +1,17 @@
 #ifndef _DATA_STRUCTURES_H_
 #define _DATA_STRUCTURES_H_
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #define MAX_DATA_ARR_SIZE 10
 #define MAX_ROWS 10
 #define MAX_COLS 10
+#define NUM_OF_OPERAND_TYPES 4
 
 enum data_type {NONE, DATA, CODE};
 enum boolean {FALSE, TRUE};
 enum guidance {EXTERN, ENTRY, NUM, STRING, MAT}; 
+
+extern int size_opcode_table;
 
 /* struct for holding an opcode and it's binary value */
 typedef struct opcodes {
@@ -19,11 +19,10 @@ typedef struct opcodes {
 	char binary_val[4];
 } opcodes;
 
-/* struct for holding a char and it's 4 strange base value */
-typedef struct char_num_tupple {
-	char character;
-	char numeric_val;
-} char_num_tuple; 
+typedef struct mem_words_per_operand_type {
+	char operand_type[2];
+	int num_of_mem_words;
+} mem_words_per_operand_type;
 
 /* struct for holding a register and it's binary value */
 typedef struct registers {
@@ -42,7 +41,7 @@ typedef struct symbol_line {
 /* struct for holding the IC \ DC (code memory word address \ data memory word address), an array of 10 bits (in chars), and a pointer to the next struct of the same type */
 typedef struct memory_word { 
 	int address;
-	char bits[10];
+	char bits[11]; /* there are 11 places so '\0' can be added */
 	struct memory_word *next;
 } memory_word;
 
@@ -54,8 +53,8 @@ typedef struct sentence {
 	char* symbol;
 	char* opcode;
 	int num_of_operands;
-	char* source_operand_type;
-	char* dest_operand_type;
+	char source_operand_type[3]; /* 3 places so '\0' can be added */
+	char dest_operand_type[3];   /* 3 places so '\0' can be added */	
 	char* operand_1; /* for variables, registers, matrixes */ 
 	char* operand_2; /* for variables, registers, matrixes */
 	int immediate_operand; /* when we have "#" */
@@ -70,6 +69,12 @@ typedef struct sentence {
 	struct sentence *next;
 } sentence;
 
+extern opcodes opcodes_table[];
+extern mem_words_per_operand_type operands_vs_num_of_words_to_use[];
+extern registers registers_table[];
+ 
+
+/*
 opcodes opcodes_table[] = {
 	{ "mov", "0000"},
 	{ "cmp", "0001"},
@@ -89,6 +94,13 @@ opcodes opcodes_table[] = {
 	{ "stop", "1111"}
 };
 
+ in the table: how many memory words the operand type requires 
+mem_words_per_operand_type operands_vs_num_of_words_to_use[] = {
+	{"00", 1},
+	{"01", 1},
+	{"10", 2},
+	{"11", 1}
+};
 
 int size_opcode_table = sizeof(opcodes_table)/sizeof(opcodes_table[0]);
 
@@ -103,5 +115,6 @@ registers registers_table[] = {
 	{"r7", "111"}
 };
  
+*/
 #endif
 
