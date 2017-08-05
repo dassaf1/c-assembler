@@ -62,3 +62,9 @@ char * convert_base_4_to_base_4_strange(int num){
     result[digits] = '\0';
     return result;
 }
+
+
+int main() {
+    printf("answer: %s\n", convert_base_4_to_base_4_strange(10002));
+    return 0;
+}
