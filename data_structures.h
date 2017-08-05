@@ -5,9 +5,13 @@
 #include <string.h>
 #include <math.h>
 
-#define TRUE 1
+#define MAX_DATA_ARR_SIZE 10
+#define MAX_ROWS 10
+#define MAX_COLS 10
 
 enum data_type {NONE, DATA, CODE};
+enum boolean {FALSE, TRUE};
+enum guidance {EXTERN, ENTRY, NUM, STRING, MAT}; 
 
 /* struct for holding an opcode and it's binary value */
 typedef struct opcodes {
@@ -43,6 +47,9 @@ typedef struct memory_word {
 } memory_word;
 
 typedef struct sentence {
+	int is_action; /* 1 if it's an action sentence, 0 if it's a guidance sentence */
+	int is_store_command; /* 1 if it's .data/.string./.mat, 0 if it's extern or entry */
+	int guidance_command; /* enum: EXTERN / ENTRY / NUM (=DATA)  / STRING / MAT */
 	int is_symbol; 
 	char* symbol;
 	char* opcode;
@@ -52,14 +59,12 @@ typedef struct sentence {
 	char* operand_1; /* for variables, registers, matrixes */ 
 	char* operand_2; /* for variables, registers, matrixes */
 	int immediate_operand; /* when we have "#" */
-	char* matrix_row_operand /* if we have M1[r1][r2] then r1 goes here */
-	char* matrix_col_operand /* r2 */
-	int is_store_command; /* 0 if is extern or intern */
-	char* guidance_command; /* .extern / .intern / .data  / .string / .mat */
+	char* matrix_row_operand; /* if we have M1[r1][r2] then r1 goes here */
+	char* matrix_col_operand; /* r2 */
 	char* string; /* if guidance_command  = .string, check for it's value in this field */
 	int data_arr[MAX_DATA_ARR_SIZE];
 	int data_arr_num_of_params; /* how many numbers to take from data_arr */
-	int mat[100][100];
+	int mat[MAX_ROWS * MAX_COLS];
 	int mat_num_of_rows;
 	int mat_num_of_cols; 
 	struct sentence *next;
