@@ -1,4 +1,4 @@
-#include "data_structures.h";
+#include "data_structures.h"
 
 opcodes opcodes_table[] = {
 	{ "mov", "0000"},
@@ -19,11 +19,14 @@ opcodes opcodes_table[] = {
 	{ "stop", "1111"}
 };
 
-char_num_tuple 4_strange_table[] = {
-	{'a', '0'},
-	{'b', '1'},
-	{'c', '2'},
-	{'d', '3'}
+int size_opcode_table = sizeof(opcodes_table)/sizeof(opcodes_table[0]);
+
+/* in the table: how many memory words the operand type requires */
+mem_words_per_operand_type operands_vs_num_of_words_to_use[] = {
+	{"00", 1},
+	{"01", 1},
+	{"10", 2},
+	{"11", 1}
 };
 
 registers registers_table[] = {
