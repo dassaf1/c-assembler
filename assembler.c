@@ -3,21 +3,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include "data_structures.h"
+#include "number_conversions.h"
 
 #define OPCODES_TABLE_LENGTH size_opcode_table
+
 
 char line[80];
 char *current_word; 
 char *current_symbol;
 int last_position;
-int IC = 100; 
-int DC = 0;
+int syntax_errors = FALSE;
+int IC; 
+int DC;
+int line_number;
 symbol_line *symbol_tail = NULL;
 symbol_line *symbol_head = NULL;
 memory_word *data_tail = NULL;
 memory_word *data_head = NULL;
 
-/* TODO: set global flag for errors and implement it where relevant */
 
 
 /* is_current_word_empty - 
@@ -26,7 +29,7 @@ memory_word *data_head = NULL;
  NOTE: The used of this function is in order to handle empty spaces or tabs between words in the line from the source file. */ 
 int is_current_word_empty(char *word)
 {
-	return strlen(word) == 0 ? 1 : 0;
+	return strlen(word) == 0 ? TRUE : FALSE;
 }
 
 /* get_next_word - 
@@ -61,16 +64,18 @@ int get_next_word(char *current_word, char *line, int last_position)
 int is_symbol(char *current_word)
 {	
 	int length = strlen(current_word);
-	if(!isalpha(current_word[0]))
-		/* TODO: add print error to stderr and turn on flag */ 
-		return 0;
 	if (current_word[length-1] == ':' && length <=30)
 		{ 
+		  if(!isalpha(current_word[0])) {
+			fprintf(stderr, "Error in line %d - symbol cannot start with a non alphabetic character\n", line_number);
+			syntax_errors = TRUE;
+			return FALSE;
+		  }
 		  current_word[length-1] = '\0';
-		  return 1;
+		  return TRUE;
 		}
 	
-	return 0;
+	return FALSE;
 }
 
 
@@ -80,16 +85,16 @@ int is_symbol(char *current_word)
 int is_store_command(char *current_word)
 {
 	if(current_word[0] != '.')
-		return 0;
+		return FALSE;
 	else
 	   strncpy(current_word, current_word+1, strlen(current_word)-1); /* removes '.' from the beginning */
 	
 	current_word[strlen(current_word)-1] = '\0'; /* in order to strcmp to be accurate */
 	   
 	if (strcmp(current_word, "data") == 0 || strcmp(current_word, "mat") == 0 || strcmp(current_word, "string") == 0) 
-		return 1;
+		return TRUE;
 
-	return 0;
+	return FALSE;
 }
 
 
@@ -99,16 +104,16 @@ int is_store_command(char *current_word)
 int is_extern_or_entry_command(char *current_word)
 {
 	if(current_word[0] != '.')
-		return 0;
+		return FALSE;
 	else
 	   strncpy(current_word, current_word+1, strlen(current_word)-1); /* removes '.' from the beginning */
 	
 	current_word[strlen(current_word)-1] = '\0'; /* in order to strcmp to be accurate */
 	   
 	if (strcmp(current_word, "extern") == 0 || strcmp(current_word, "entry") == 0) 
-		return 1;
+		return TRUE;
 	
-	return 0;
+	return FALSE;
 
 }
 
@@ -118,7 +123,7 @@ int is_extern_or_entry_command(char *current_word)
 */
 int is_extern(char *current_word)
 {
-	return (strcmp(current_word, "extern") == 0 ? 1 : 0);
+	return (strcmp(current_word, "extern") == 0 ? TRUE : FALSE);
 
 }
 
@@ -132,13 +137,13 @@ int symbol_exists(symbol_line *head, char *current_symbol)
 	while (temp)
 	{
 		if (strcmp(temp->symbol, current_symbol) == 0) 
-		return 1; 
+		return TRUE; 
 
 		else
 			temp = temp->next;
 	}
 	
-	return 0;
+	return FALSE;
 }
 
 /* add_to_symbol_table -
@@ -213,10 +218,78 @@ int is_existing_opcode(char *current_word)
 	for (i = 0; i < OPCODES_TABLE_LENGTH; i++)
 	{
 		if (strcmp(opcodes_table[0].opcode,current_word) == 0)
-			return 1;
+			return TRUE;
 	}
 	
-	return 0;
+	return FALSE;
+}
+
+/* add_string_to_data_table - 
+   receives the sentence after it was parsed and converts each char of the string to it's binary representation for it's ascii value.
+   returns the number of memory words added to the data table */
+int add_string_to_data_table(sentence *curr)
+{
+	int i;
+	char *binary_char;
+	memory_word* new_memory_word; 
+	int added_mem_words = 0;
+
+	for (i=0; i < length(curr->string); i++) {
+	
+		new_memory_word; = (memory_word*)malloc(sizeof(memory_word));
+		if (!new_memory_word)
+		{
+			fprintf(stderr, "Memory allocation for new memory word failed!");
+			exit(1);
+		}
+		
+		binary_char = convert_ascii_value_to_binary(curr->string[i]);
+		strncpy(new_memory_word->bits, binary_char); 
+	
+		if (data_tail)
+			data_tail->next = new_memory_word; 
+		else {
+			data_head = new_memory_word;
+			data_tail = data_head;
+			}
+		
+		added_mem_words++; 
+	}
+		/* adding '\0' to data table at the end of the string */
+		new_memory_word = (memory_word*)malloc(sizeof(memory_word));
+		strncpy(new_memory_word->bits, "00000000\0");
+		
+		added_mem_words++; 
+		data_tail->next = new_memory_word; 
+	
+		return added_mem_words;
+}
+
+/* add_to_data_table -
+   receives: the current sentence (line after it was parsed) and adds to the data tables the data according it's type.
+   Adds to DC the number of entries commited */
+void add_to_data_table(sentence* curr)
+{
+	int num_of_entries = 0; 
+	
+	switch(curr->guidance_command)
+	{
+		case(STRING):
+			num_of_entries = add_string_to_data_table(curr);
+			break;
+		case(DATA):
+			num_of_entries = add_num_to_data_table(curr);
+			break;
+		case(MAT):
+			num_of_entries = add_matrix_to_data_table(curr);
+			break;
+		default:
+			return;
+	}
+
+	DC+=num_of_entries;
+	return;
+		
 }
 
 /* To complete: 
@@ -225,8 +298,10 @@ b) detect the type of opcode -> validate following input -> convert -> add line 
 
 void execute_first_pass(FILE *fd)
 { 
-	int line_number = 0;
-	sentence *current_sentece;
+	sentence *current_sentence;	
+	line_number = 0;	
+	IC = 100;
+	DC = 0;
 		
 	while(fgets(line,80,fd))
 	{	
@@ -238,22 +313,22 @@ void execute_first_pass(FILE *fd)
 		last_position = get_next_word(current_word, line, -1);
 		*/
 
-		if(current_sentence->is_store_command == 1) { /*open b*/
-			if(current_sentece->is_symbol) { /*open a*/					
+		if(current_sentence->is_store_command == TRUE) { /*open b*/
+			if(current_sentence->is_symbol) { /*open a*/					
 				if(!symbol_exists(symbol_head, current_sentence->symbol)) {
 					symbol_tail = add_to_symbol_table(symbol_tail, current_sentence->symbol, DC, 0, DATA);
 					}	
 				else
-					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 						current_sentece->symbol);
+					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 						current_sentence->symbol);
 			}/*close a*/
-				/*TODO: add into data table: 
-				   TODO: ask current_sentence for types and insert into data table, increase DC */				
+				/* adding into data table. DC is increased: */ 
+					add_to_data_table(current_sentence);				
 		}/*close b*/
 
 		else { /*open c*/ /* when is_store_command = 0 */
 			if(strcmp(current_sentence->guidance_command,"extern")==0) { /*open d*/ /* when is extern */
 				if(current_sentence->is_symbol==1)
-					fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n");
+					fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number);
 				 symbol_tail = add_to_symbol_table(symbol_tail, current_sentence->symbol, -999, 1, NONE);
 			} /*close d*/
 			else { /*open e*/ 
@@ -262,14 +337,17 @@ void execute_first_pass(FILE *fd)
 					symbol_tail = add_to_symbol_table(symbol_tail, current_symbol, IC, 0, CODE);
 					}
 					else
-					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 							current_sentece->symbol);
+					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 							current_sentence->symbol);
 				} /*close f*/
-				/* TODO: add increase of IC according the current sentece */
-			} /*close c*/
+				/* analyzing sentence so IC is increased by the number of memory words the action sentence takes */
+				if(current_sentence->is_action)				
+					increase_IC_according_sentence(current_sentence);
+			} /*close e*/
 	}
 			/* TODO: go over the symbol table and update the address of each entry with the IC offset, only when 
 				the symbol is of type DATA */
-		
+	
+	}
 }
 
 
@@ -277,7 +355,7 @@ void execute_first_pass(FILE *fd)
 int run_assembler(FILE *fd){
 	
 	execute_first_pass(fd);
-	return 0;
+       	return 0;
 
 }
 
