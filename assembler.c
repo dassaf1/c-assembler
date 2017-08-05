@@ -4,6 +4,7 @@
 #include <string.h>
 #include "data_structures.h"
 #include "number_conversions.h"
+#include "line_parser.h"
 
 #define OPCODES_TABLE_LENGTH size_opcode_table
 
@@ -131,9 +132,9 @@ int is_extern(char *current_word)
 /* symbol_exists - 
  receives: the head of the symbols table, the current symbol. The function searches within the list if the symbol already exists.
  returns: 1 if already exists, 0 if not. */
-int symbol_exists(symbol_line *head, char *current_symbol) 
+int symbol_exists(char *current_symbol) 
 {
-	symbol_line *temp = head; 
+	symbol_line *temp = symbol_head; 
 	while (temp)
 	{
 		if (strcmp(temp->symbol, current_symbol) == 0) 
@@ -149,8 +150,8 @@ int symbol_exists(symbol_line *head, char *current_symbol)
 /* add_to_symbol_table -
  receives: the last line in the symbols table, the current symbol to be added, the address where it's going to be allocated (DC or 0 if it's extern),
  1 if the symbol is extern / 0 if not, the symbol type (from enum: NONE, DATA, CODE). The function allocates a new node
- of type symbol_line to the symbols table and returns a pointer to this last added. */  
-symbol_line* add_to_symbol_table(symbol_line *tail, char* current_symbol, int address, int is_extern, int symbol_type)
+ of type symbol_line to the symbols table. */  
+void add_to_symbol_table(char* current_symbol, int address, int is_extern, int symbol_type)
 {
 	symbol_line* new_symbol = (symbol_line*)malloc(sizeof(symbol_line));
 
@@ -167,14 +168,16 @@ symbol_line* add_to_symbol_table(symbol_line *tail, char* current_symbol, int ad
 	new_symbol->is_extern = is_extern;
 	new_symbol->symbol_type = symbol_type; 
 
-	if(!tail)
-		tail = new_symbol;
+	if(!symbol_head) {
+		symbol_head = new_symbol;
+		symbol_tail = symbol_head;
+		}
 	else {
-		tail->next = new_symbol;
-		tail = tail->next;
+		symbol_tail->next = new_symbol;
+		symbol_tail = symbol_tail->next;
 	}
 
-	return tail;
+	return;
 
 }
 
@@ -226,7 +229,7 @@ int is_existing_opcode(char *current_word)
 
 /* add_string_to_data_table - 
    receives the sentence after it was parsed and converts each char of the string to it's binary representation for it's ascii value.
-   returns the number of memory words added to the data table */
+   returns the number of memory words added to the data table. */
 int add_string_to_data_table(sentence *curr)
 {
 	int i;
@@ -234,9 +237,9 @@ int add_string_to_data_table(sentence *curr)
 	memory_word* new_memory_word; 
 	int added_mem_words = 0;
 
-	for (i=0; i < length(curr->string); i++) {
+	for (i=0; i < strlen(curr->string); i++) {
 	
-		new_memory_word; = (memory_word*)malloc(sizeof(memory_word));
+		new_memory_word = (memory_word*)malloc(sizeof(memory_word));
 		if (!new_memory_word)
 		{
 			fprintf(stderr, "Memory allocation for new memory word failed!");
@@ -244,7 +247,7 @@ int add_string_to_data_table(sentence *curr)
 		}
 		
 		binary_char = convert_ascii_value_to_binary(curr->string[i]);
-		strncpy(new_memory_word->bits, binary_char); 
+		strcpy(new_memory_word->bits, binary_char); 
 	
 		if (data_tail)
 			data_tail->next = new_memory_word; 
@@ -257,13 +260,81 @@ int add_string_to_data_table(sentence *curr)
 	}
 		/* adding '\0' to data table at the end of the string */
 		new_memory_word = (memory_word*)malloc(sizeof(memory_word));
-		strncpy(new_memory_word->bits, "00000000\0");
+		strcpy(new_memory_word->bits, "00000000\0");
 		
 		added_mem_words++; 
 		data_tail->next = new_memory_word; 
 	
 		return added_mem_words;
 }
+
+
+/* add_num_to_data_table - 
+   receives the sentence after it was parsed and converts each number of the data_arr of the sentence into it's binary value.
+   returns the number of memory words added to the data table. */
+int add_num_to_data_table(sentence *curr)
+{
+	int i;
+	memory_word* new_memory_word;
+	int added_mem_words = 0;
+	
+	for(i=0; i < curr->data_arr_num_of_params+1 ; i++) {
+	
+	new_memory_word = (memory_word*)malloc(sizeof(memory_word));
+		if (!new_memory_word)
+		{
+			fprintf(stderr, "Memory allocation for new memory word failed!");
+			exit(1);
+		}
+	
+	strcpy(new_memory_word->bits, convert_dec_to_binary(curr->data_arr[i]));
+	if (data_tail)
+		data_tail->next = new_memory_word; 
+	else {
+		data_head = new_memory_word;
+		data_tail = data_head;
+		}
+		
+		added_mem_words++; 	 
+	}
+		
+	return added_mem_words;
+}
+
+
+/* add_num_to_data_table - 
+   receives the sentence after it was parsed and converts each number of the data_arr of the sentence into it's binary value.
+   returns the number of memory words added to the data table. */
+
+int add_matrix_to_data_table(sentence *curr)
+{
+	int i;
+	memory_word* new_memory_word;
+	int added_mem_words = 0;
+	
+	for(i=0; i < (curr->mat_num_of_rows)*(curr->mat_num_of_cols)+1 ; i++) {
+	
+	new_memory_word = (memory_word*)malloc(sizeof(memory_word));
+		if (!new_memory_word)
+		{
+			fprintf(stderr, "Memory allocation for new memory word failed!");
+			exit(1);
+		}
+	
+	strcpy(new_memory_word->bits, convert_dec_to_binary(curr->mat[i]));
+	if (data_tail)
+		data_tail->next = new_memory_word; 
+	else {
+		data_head = new_memory_word;
+		data_tail = data_head;
+		}
+		
+		added_mem_words++; 	 
+	}
+		
+	return added_mem_words;
+}
+
 
 /* add_to_data_table -
    receives: the current sentence (line after it was parsed) and adds to the data tables the data according it's type.
@@ -277,7 +348,7 @@ void add_to_data_table(sentence* curr)
 		case(STRING):
 			num_of_entries = add_string_to_data_table(curr);
 			break;
-		case(DATA):
+		case(NUM):
 			num_of_entries = add_num_to_data_table(curr);
 			break;
 		case(MAT):
@@ -292,9 +363,61 @@ void add_to_data_table(sentence* curr)
 		
 }
 
-/* To complete: 
-a) detect the type of data to convert to data table -> validate following input -> convert -> add line to data table\list.
-b) detect the type of opcode -> validate following input -> convert -> add line to code table\list. */
+/* add_to_IC_by_operand_type -
+   receives: an operand to search for at the operands_vs_num_of_words_to_use table (initialized in data_structures.h).
+   The function adds to IC the number of memory words that the type of operand uses. */
+void add_to_IC_by_operand_type(char *operand)
+{
+	int i;
+	for (i = 0; i < NUM_OF_OPERAND_TYPES; i++)
+	{
+		if(strcmp(operand,operands_vs_num_of_words_to_use[i].operand_type)==0) {
+			IC += operands_vs_num_of_words_to_use[i].num_of_mem_words;
+			return;
+		}	
+	}
+	
+	return;
+}
+
+/* increase_IC_according_sentence - 
+   receives: the current sentence (the line after it was parsed) and checks for source and destination operands.
+   The function increases IC according the number of memory words each type of operand requires. */
+void increase_IC_according_sentence(sentence *curr)
+{	
+	IC++;  /* for the action sentence itself */	
+	if(strcmp(curr->source_operand_type,curr->source_operand_type)==0 && strcmp(curr->source_operand_type,"11")==0) {
+	/* if both operands are "straight forwards registers" type, they consume a common single word */
+		IC++;
+		return;
+	}
+	else
+	add_to_IC_by_operand_type(curr->source_operand_type);
+	add_to_IC_by_operand_type(curr->dest_operand_type);
+	return;
+}
+
+/* increase_DC_symbol_address_by_IC_offset -
+   The function goes over the symbols table and adds to each entry of type DATA the IC offset. */
+void increase_DC_symbol_address_by_IC_offset()
+{
+	symbol_line *temp;
+
+	if(!symbol_head)
+		return;
+	
+	temp = symbol_head;
+	
+	while(temp) {
+		if (temp->symbol_type == DATA)
+			temp->address += IC;
+	
+		temp = temp->next;
+	}
+	
+	return;
+}
+
 
 void execute_first_pass(FILE *fd)
 { 
@@ -305,49 +428,53 @@ void execute_first_pass(FILE *fd)
 		
 	while(fgets(line,80,fd))
 	{	
-		current_sentence = parse_sentence(line);
-		line_number++;
+		line_number++;		
+		current_sentence = parse_sentence(line, line_number);
+		
 
 		/* MOVE TO PARSE SENTENCE: 
 		has_symbol = 0; 
 		last_position = get_next_word(current_word, line, -1);
 		*/
 
-		if(current_sentence->is_store_command == TRUE) { /*open b*/
-			if(current_sentence->is_symbol) { /*open a*/					
-				if(!symbol_exists(symbol_head, current_sentence->symbol)) {
-					symbol_tail = add_to_symbol_table(symbol_tail, current_sentence->symbol, DC, 0, DATA);
+		if(current_sentence->is_store_command == TRUE) { 
+			if(current_sentence->is_symbol) { 					
+				if(!symbol_exists(current_sentence->symbol)) {
+					add_to_symbol_table(current_sentence->symbol, DC, 0, DATA);
 					}	
 				else
 					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 						current_sentence->symbol);
-			}/*close a*/
+			}
 				/* adding into data table. DC is increased: */ 
 					add_to_data_table(current_sentence);				
-		}/*close b*/
+		}
 
-		else { /*open c*/ /* when is_store_command = 0 */
-			if(strcmp(current_sentence->guidance_command,"extern")==0) { /*open d*/ /* when is extern */
+		else { /* when is_store_command = 0 */
+			if(current_sentence->guidance_command == EXTERN) { /* when is extern */
 				if(current_sentence->is_symbol==1)
 					fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number);
-				 symbol_tail = add_to_symbol_table(symbol_tail, current_sentence->symbol, -999, 1, NONE);
-			} /*close d*/
-			else { /*open e*/ 
-				if(current_sentence->is_symbol==1) { /*open f*/
-					if(!symbol_exists(symbol_head, current_sentence->symbol)) {					
-					symbol_tail = add_to_symbol_table(symbol_tail, current_symbol, IC, 0, CODE);
+				 add_to_symbol_table(current_sentence->symbol, -999, 1, NONE);
+			} 
+			else { 
+				if(current_sentence->is_symbol==1) { 
+					if(!symbol_exists(current_sentence->symbol)) {					
+					add_to_symbol_table(current_symbol, IC, 0, CODE);
 					}
 					else
 					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 							current_sentence->symbol);
-				} /*close f*/
+				} 
 				/* analyzing sentence so IC is increased by the number of memory words the action sentence takes */
 				if(current_sentence->is_action)				
 					increase_IC_according_sentence(current_sentence);
-			} /*close e*/
-	}
-			/* TODO: go over the symbol table and update the address of each entry with the IC offset, only when 
-				the symbol is of type DATA */
+			} 
+		}
+			free(current_sentence);			
 	
 	}
+			/* updating the DC address of each entry in symbol_table with the IC offset, only when 
+													the symbol is of DATA type */
+			increase_DC_symbol_address_by_IC_offset();
+			
 }
 
 
