@@ -35,6 +35,22 @@ int convert_dec_to_another_base(int number,int base){
     return (number % base) + 10*convert_dec_to_another_base(number / base, base);
 }
 
+/* Converts a decimal number to a binary number with padded zeroes up to x bits. */
+void convert_dec_to_x_bit_binary(int num, int bits, char * arr){
+    int i = bits - 1;
+    int binary_num = convert_dec_to_another_base(num, 2);
+    do {
+        arr[i] = binary_num % 10 == 0 ? '0' : '1';
+        binary_num = binary_num / 10;
+        i--;
+    }
+    while (binary_num);
+
+    for (; i >= 0; i--) { /* pad with zeros */
+        arr[i] = '0';
+    }
+}
+
 /* Helper function to convert_base_4_to_base_4_strange. */
 void convert_base_4_to_base_4_strange_internal(int num, char * result){
     if (num < 10 && num >= 0) {
