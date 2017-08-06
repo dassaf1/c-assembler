@@ -113,7 +113,7 @@ int is_extern(char *current_word)
    receives: the line to be parsed and the current line number.
    The functions parses the line and populates the sentence structure (defined in data_structures.h) with the relevant fields.
    returns: a sentence structure. */ 
-sentence * parse_sentence(char *line, int line_number) {
+sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 	
 	int last_position;
 	char *current_word;
@@ -131,6 +131,11 @@ sentence * parse_sentence(char *line, int line_number) {
 	last_position = get_next_word(current_word, line, -1);
 	if(is_symbol(current_word, line_number)) {  /* if so, set is_symbol to 1, copy it to current_symbol and get the next word 
 							into current_word */
+			if(is_saved_word(current_word) {
+				printf("Error in line %d - the word %s is a saved word in the language\n", line_number, current_word);
+				*syntax_error = TRUE;
+				continue;
+			}			
 			parsed->has_symbol = 1; 			
 			strcpy(parsed->symbol,current_word);
 			last_position = get_next_word(current_word,line,last_position);
