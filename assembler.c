@@ -325,7 +325,7 @@ void execute_first_pass(FILE *fd)
 	while(fgets(line,80,fd))
 	{	
 		line_number++;		
-		current_sentence = parse_sentence(line, line_number);
+		current_sentence = parse_sentence(line, line_number, &syntax_errors);
 	
 		if(current_sentence->is_store_command == TRUE) { 
 			if(current_sentence->is_symbol) { 					
