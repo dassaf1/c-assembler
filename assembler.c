@@ -9,8 +9,7 @@
 #define OPCODES_TABLE_LENGTH size_opcode_table
 
 
-char line[80];
-char *current_word; 
+char line[80]; 
 char *current_symbol;
 int last_position;
 int syntax_errors = FALSE;
@@ -22,111 +21,6 @@ symbol_line *symbol_head = NULL;
 memory_word *data_tail = NULL;
 memory_word *data_head = NULL;
 
-
-
-/* is_current_word_empty - 
- receives: the current word obtained from list. 
- returns: 1 if the word is empty, 0 if not.
- NOTE: The used of this function is in order to handle empty spaces or tabs between words in the line from the source file. */ 
-int is_current_word_empty(char *word)
-{
-	return strlen(word) == 0 ? TRUE : FALSE;
-}
-
-/* get_next_word - 
- receives: a pointer to the line to take the word from, a pointer to the current_word, and the position in the line where last time the function was called returned.   
- returns: the position where we stopped in the line. 
- NOTE: in case of ":" or "." - these will be returned as part of the word. The reason is that these characters will assist
- with symbol type and commands recognition. They must be removed afterwards, in other function.
- NOTE2: The parameter last_position should be -1 when a new line is parsed. */
-int get_next_word(char *current_word, char *line, int last_position)
-{	
- 	int position = last_position+1;
-	int i = 0;
-	while(line[position] != ' ' && line[position] != ',' && line[position] != '[' && line[position] != ']')
-		{
-			current_word[i] = tolower(line[position]); /* to unify all comparisons so they will be executed in lower case */
-			i++;
-			position++;
-		}
-	current_word[i] = '\0';	
-
-	if(is_current_word_empty(current_word))
-		position = get_next_word(current_word, line, position);
-
-	return position;
-}
-
-
-
-/* is_symbol - 
- receives: the current word to parse,
- returns: 1 if it's a symbol, 0 if not. */ 
-int is_symbol(char *current_word)
-{	
-	int length = strlen(current_word);
-	if (current_word[length-1] == ':' && length <=30)
-		{ 
-		  if(!isalpha(current_word[0])) {
-			fprintf(stderr, "Error in line %d - symbol cannot start with a non alphabetic character\n", line_number);
-			syntax_errors = TRUE;
-			return FALSE;
-		  }
-		  current_word[length-1] = '\0';
-		  return TRUE;
-		}
-	
-	return FALSE;
-}
-
-
-/* is_store_command -
- receives: the current word to parse,
- returns: 1 if the word is .data/.string/.mat, 0 if not. */
-int is_store_command(char *current_word)
-{
-	if(current_word[0] != '.')
-		return FALSE;
-	else
-	   strncpy(current_word, current_word+1, strlen(current_word)-1); /* removes '.' from the beginning */
-	
-	current_word[strlen(current_word)-1] = '\0'; /* in order to strcmp to be accurate */
-	   
-	if (strcmp(current_word, "data") == 0 || strcmp(current_word, "mat") == 0 || strcmp(current_word, "string") == 0) 
-		return TRUE;
-
-	return FALSE;
-}
-
-
-/* is_extern_or_entry_command - 
- receives: the current word to parse,
- returns: 1 if the word is .extern/.entry, 0 if not. */
-int is_extern_or_entry_command(char *current_word)
-{
-	if(current_word[0] != '.')
-		return FALSE;
-	else
-	   strncpy(current_word, current_word+1, strlen(current_word)-1); /* removes '.' from the beginning */
-	
-	current_word[strlen(current_word)-1] = '\0'; /* in order to strcmp to be accurate */
-	   
-	if (strcmp(current_word, "extern") == 0 || strcmp(current_word, "entry") == 0) 
-		return TRUE;
-	
-	return FALSE;
-
-}
-
-/* is_extern -
- receives: the current word after we detected it is "extern" or "entry",
- returns: 1 if it's "extern", 0 if not. 
-*/
-int is_extern(char *current_word)
-{
-	return (strcmp(current_word, "extern") == 0 ? TRUE : FALSE);
-
-}
 
 
 /* symbol_exists - 
@@ -273,8 +167,9 @@ int add_string_to_data_table(sentence *curr)
    receives the sentence after it was parsed and converts each number of the data_arr of the sentence into it's binary value.
    returns the number of memory words added to the data table. */
 int add_num_to_data_table(sentence *curr)
-{
+{	
 	int i;
+	char converted_to_bits[11];
 	memory_word* new_memory_word;
 	int added_mem_words = 0;
 	
@@ -287,7 +182,8 @@ int add_num_to_data_table(sentence *curr)
 			exit(1);
 		}
 	
-	strcpy(new_memory_word->bits, convert_dec_to_binary(curr->data_arr[i]));
+	convert_dec_to_x_bit_binary(curr->data_arr[i],10,converted_to_bits);
+	strcpy(new_memory_word->bits,converted_to_bits);
 	if (data_tail)
 		data_tail->next = new_memory_word; 
 	else {
@@ -430,13 +326,7 @@ void execute_first_pass(FILE *fd)
 	{	
 		line_number++;		
 		current_sentence = parse_sentence(line, line_number);
-		
-
-		/* MOVE TO PARSE SENTENCE: 
-		has_symbol = 0; 
-		last_position = get_next_word(current_word, line, -1);
-		*/
-
+	
 		if(current_sentence->is_store_command == TRUE) { 
 			if(current_sentence->is_symbol) { 					
 				if(!symbol_exists(current_sentence->symbol)) {
@@ -476,6 +366,8 @@ void execute_first_pass(FILE *fd)
 			increase_DC_symbol_address_by_IC_offset();
 			
 }
+
+
 
 
 /* In assembler.h interface: run_assembler - calls the first and second pass */
