@@ -39,11 +39,21 @@ int get_next_word(char *current_word, char *line, int last_position)
 }
 
 
+/* is_saved_word -
+   receives: the current word to check if it is a saved word in the language or not.
+   returns 1 if the word is a saved word, 0 if not. */
+int is_saved_word(char *current_word, int line_number, int *syntax_error)
+{
+
+	/* TODO: complete the function. */
+	printf("Error in line %d - the word %s is a saved word in the language\n", line_number, current_word);
+	*syntax_error = TRUE;
+}				
 
 /* is_symbol - 
  receives: the current word to parse,
  returns: 1 if it's a symbol, 0 if not. */ 
-int is_symbol(char *current_word, int line_number)
+int is_symbol(char *current_word, int line_number, int *syntax_error)
 {	
 	int length = strlen(current_word);
 	if (current_word[length-1] == ':' && length <=30)
@@ -53,11 +63,14 @@ int is_symbol(char *current_word, int line_number)
 			syntax_errors = TRUE;
 			return FALSE;
 		  }
+		  if(is_saved_word(current_word, line_number, &syntax_error))
+			return FALSE;
+
 		  current_word[length-1] = '\0';
 		  return TRUE;
 		}
-	
-	return FALSE;
+	else
+		return FALSE;
 }
 
 
@@ -117,6 +130,7 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 	
 	int last_position;
 	char *current_word;
+	int opc;
 
 	sentence *parsed = (sentence*)malloc(sizeof(sentence));
 
@@ -127,19 +141,55 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 		}
 
 	parsed->has_symbol = 0;
+	parsed->is_action = 0;
 	 
 	last_position = get_next_word(current_word, line, -1);
-	if(is_symbol(current_word, line_number)) {  /* if so, set is_symbol to 1, copy it to current_symbol and get the next word 
-							into current_word */
-			if(is_saved_word(current_word) {
-				printf("Error in line %d - the word %s is a saved word in the language\n", line_number, current_word);
-				*syntax_error = TRUE;
-				continue;
-			}			
+	if(is_symbol(current_word, line_number, &syntax_error)) {  /* if so, set is_symbol to 1, copy it to current_symbol and get the  
+
+							next word into current_word */
+					
 			parsed->has_symbol = 1; 			
 			strcpy(parsed->symbol,current_word);
 			last_position = get_next_word(current_word,line,last_position);
+			
 	}
+
+	if(is_store_command(current_word)) {
+		parsed->is_store_command = 1;
+		parse_data_by_its_type(parsed,current_word,last_position); /* check if sending parsed only is ok or if &parsed need to be 	                                                                         sent */
+		}
+
+	else if(is_extern_or_entry_command(current_word)) {
+		parsed->is_store_command = 0;
+		if(strcmp(current_word,"extern")==0)
+			parsed->guidance_command = EXTERN;
+		else
+			parsed->guidance_command = ENTRY;
+		
+		last_position = get_next_word(current_word,line,last_position);
+		
+		if(is_symbol(current_word, line_number, &syntax_error)) {
+			if(parsed->is_symbol==1) 
+			 	fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number);
+			strcpy(parsed->symbol,current_word);
+		}
+	}
+	
+	opc = find_valid_opcode(current_word, last_position, line_number, &syntax_error);
+	else if(opc > 0)
+		{
+		   parsed->is_action = 1;
+	    	   strcpy(parsed->opcode,current_word);
+		   
+		   
+				
+			
+				
+	
+		
+				
+
+	
 
 	
 		
