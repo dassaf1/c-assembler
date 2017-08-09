@@ -60,10 +60,10 @@ int is_symbol(char *current_word, int line_number, int *syntax_error)
 		{ 
 		  if(!isalpha(current_word[0])) {
 			fprintf(stderr, "Error in line %d - symbol cannot start with a non alphabetic character\n", line_number);
-			syntax_errors = TRUE;
+			*syntax_errors = TRUE;
 			return FALSE;
 		  }
-		  if(is_saved_word(current_word, line_number, &syntax_error))
+		  if(is_saved_word(current_word, line_number, syntax_error))
 			return FALSE;
 
 		  current_word[length-1] = '\0';
@@ -140,7 +140,7 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 			exit(1);
 		}
 
-	parsed->has_symbol = 0;
+	parsed->is_symbol = 0;
 	parsed->is_action = 0;
 	 
 	last_position = get_next_word(current_word, line, -1);
@@ -148,7 +148,7 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 
 							next word into current_word */
 					
-			parsed->has_symbol = 1; 			
+			parsed->is_symbol = 1; 			
 			strcpy(parsed->symbol,current_word);
 			last_position = get_next_word(current_word,line,last_position);
 			
@@ -156,6 +156,7 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 
 	if(is_store_command(current_word)) {
 		parsed->is_store_command = 1;
+		detect_data_type(parsed,current_word);/* TODO - this functions */
 		parse_data_by_its_type(parsed,current_word,last_position); /* check if sending parsed only is ok or if &parsed need to be 	                                                                         sent */
 		}
 
@@ -168,13 +169,15 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_error) {
 		
 		last_position = get_next_word(current_word,line,last_position);
 		
-		if(is_symbol(current_word, line_number, &syntax_error)) {
+		if(is_symbol(current_word, line_number, &syntax_error)) { /* TODO: add parameter to is_symbol to set if the
+":" must be a parameter to check symbol existance by */
 			if(parsed->is_symbol==1) 
 			 	fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number);
 			strcpy(parsed->symbol,current_word);
 		}
 	}
 	
+	/* if first word is not symbol||store_cmd||extern or if first is symbol and second is not store_cmd||extern:*/
 	opc = find_valid_opcode(current_word, last_position, line_number, &syntax_error);
 	else if(opc > 0)
 		{
