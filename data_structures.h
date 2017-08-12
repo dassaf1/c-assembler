@@ -6,6 +6,7 @@
 #define MAX_ROWS 10
 #define MAX_COLS 10
 #define NUM_OF_OPERAND_TYPES 4
+#define NUM_OF_SAVED_WORDS 29
 
 enum data_type {NONE, DATA, CODE};
 enum boolean {FALSE, TRUE};
@@ -31,7 +32,7 @@ typedef struct registers {
 } registers;
 
 typedef struct symbol_line {
-	char symbol[10];
+	char symbol[30];
 	int address;
 	int is_extern;
 	int symbol_type; /* from enum: NONE, DATA, CODE */
@@ -50,18 +51,21 @@ typedef struct sentence {
 	int is_store_command; /* 1 if it's .data/.string./.mat, 0 if it's extern or entry */
 	int guidance_command; /* enum: EXTERN / ENTRY / NUM (=DATA)  / STRING / MAT */
 	int is_symbol; 
-	char* symbol;
-	char* opcode[5];
-	int num_of_operands;
-	char source_operand_type[3]; /* 3 places so '\0' can be added */
-	char dest_operand_type[3];   /* 3 places so '\0' can be added */	
+	char symbol[30];
+	char opcode[5];
+	int num_of_operands; /* 0 if no operands, 1 if destiantion, 2 if if both destination and source*/
+	char source_operand_type[3]; /* 3 places so '\0' can be added - miunim */
+	char dest_operand_type[3];   /* 3 places so '\0' can be added - miunim */	
 	char* operand_1; /* for variables, registers, matrixes */ 
 	char* operand_2; /* for variables, registers, matrixes */
-	int immediate_operand; /* when we have "#" */
-	char* matrix_row_operand; /* if we have M1[r1][r2] then r1 goes here */
-	char* matrix_col_operand; /* r2 */
+	int immediate_operand_a; /* when we have "#" */
+	int immediate_operand_b;
+	char matrix_row_operand_a[2]; /* if we have M1[r1][r2] then r1 goes here */
+	char matrix_col_operand_a[2]; /* r2 */
+	char matrix_row_operand_b[2]; /* if we have M2[r3][r4] then r3 goes here */
+	char matrix_col_operand_b[2]; /* r4 */
 	char* string; /* if guidance_command  = .string, check for it's value in this field */
-	int data_arr[MAX_DATA_ARR_SIZE];
+	int data_arr[MAX_DATA_ARR_SIZE]; /* if guidance command = .data, check for the values in this array */
 	int data_arr_num_of_params; /* how many numbers to take from data_arr */
 	int mat[MAX_ROWS * MAX_COLS];
 	int mat_num_of_rows;
@@ -72,6 +76,7 @@ typedef struct sentence {
 extern opcodes opcodes_table[];
 extern mem_words_per_operand_type operands_vs_num_of_words_to_use[];
 extern registers registers_table[];
+extern char *saved_languages_words[NUM_OF_SAVED_WORDS];
  
 
 /*
