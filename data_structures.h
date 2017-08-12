@@ -7,6 +7,8 @@
 #define MAX_COLS 10
 #define NUM_OF_OPERAND_TYPES 4
 #define NUM_OF_SAVED_WORDS 29
+#define NUM_OF_OPCODES 16
+#define MAX_STRING_SIZE 80
 
 enum data_type {NONE, DATA, CODE};
 enum boolean {FALSE, TRUE};
@@ -56,15 +58,15 @@ typedef struct sentence {
 	int num_of_operands; /* 0 if no operands, 1 if destiantion, 2 if if both destination and source*/
 	char source_operand_type[3]; /* 3 places so '\0' can be added - miunim */
 	char dest_operand_type[3];   /* 3 places so '\0' can be added - miunim */	
-	char* operand_1; /* for variables, registers, matrixes */ 
-	char* operand_2; /* for variables, registers, matrixes */
+	char operand_1[3]; /* for variables, registers, matrixes */ 
+	char operand_2[3]; /* for variables, registers, matrixes */
 	int immediate_operand_a; /* when we have "#" */
 	int immediate_operand_b;
 	char matrix_row_operand_a[2]; /* if we have M1[r1][r2] then r1 goes here */
 	char matrix_col_operand_a[2]; /* r2 */
 	char matrix_row_operand_b[2]; /* if we have M2[r3][r4] then r3 goes here */
 	char matrix_col_operand_b[2]; /* r4 */
-	char* string; /* if guidance_command  = .string, check for it's value in this field */
+	char string[MAX_STRING_SIZE]; /* if guidance_command  = .string, check for it's value in this field */
 	int data_arr[MAX_DATA_ARR_SIZE]; /* if guidance command = .data, check for the values in this array */
 	int data_arr_num_of_params; /* how many numbers to take from data_arr */
 	int mat[MAX_ROWS * MAX_COLS];
@@ -122,4 +124,5 @@ registers registers_table[] = {
  
 */
 #endif
+
 
