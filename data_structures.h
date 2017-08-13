@@ -9,6 +9,9 @@
 #define NUM_OF_SAVED_WORDS 29
 #define NUM_OF_OPCODES 16
 #define MAX_STRING_SIZE 80
+#define MAX_SYMBOL_SIZE 31
+#define MAX_OPCODE_SIZE 5
+#define MAX_OPERAND_TYPE_SIZE 3
 
 enum data_type {NONE, DATA, CODE};
 enum boolean {FALSE, TRUE};
@@ -20,6 +23,9 @@ extern int size_opcode_table;
 typedef struct opcodes {
 	char* opcode;
 	char binary_val[4];
+	int qty_of_supported_operands;
+	int source_operand_types[5];
+	int destination_operand_types[5];
 } opcodes;
 
 typedef struct mem_words_per_operand_type {
@@ -32,6 +38,12 @@ typedef struct registers {
 	char register_name[2];
 	char register_val[3];
 } registers;
+
+typedef struct mat {
+	char mat_name[MAX_SYMBOL_SIZE];
+	char reg_row[3];
+	char reg_col[3];
+} mat;
 
 typedef struct symbol_line {
 	char symbol[30];
@@ -53,19 +65,19 @@ typedef struct sentence {
 	int is_store_command; /* 1 if it's .data/.string./.mat, 0 if it's extern or entry */
 	int guidance_command; /* enum: EXTERN / ENTRY / NUM (=DATA)  / STRING / MAT */
 	int is_symbol; 
-	char symbol[30];
-	char opcode[5];
+	char symbol[MAX_SYMBOL_SIZE];
+	char opcode[MAX_OPCODE_SIZE];
 	int num_of_operands; /* 0 if no operands, 1 if destiantion, 2 if if both destination and source*/
-	char source_operand_type[3]; /* 3 places so '\0' can be added - miunim */
-	char dest_operand_type[3];   /* 3 places so '\0' can be added - miunim */	
-	char operand_1[3]; /* for variables, registers, matrixes */ 
-	char operand_2[3]; /* for variables, registers, matrixes */
+	char source_operand_type[MAX_OPERAND_TYPE_SIZE]; /* 3 places so '\0' can be added - miunim */
+	char dest_operand_type[MAX_OPERAND_TYPE_SIZE];   /* 3 places so '\0' can be added - miunim */
+	char operand_1[MAX_SYMBOL_SIZE]; /* for variables, registers, matrixes */
+	char operand_2[MAX_SYMBOL_SIZE]; /* for variables, registers, matrixes */
 	int immediate_operand_a; /* when we have "#" */
-	int immediate_operand_b;
-	char matrix_row_operand_a[2]; /* if we have M1[r1][r2] then r1 goes here */
-	char matrix_col_operand_a[2]; /* r2 */
-	char matrix_row_operand_b[2]; /* if we have M2[r3][r4] then r3 goes here */
-	char matrix_col_operand_b[2]; /* r4 */
+	int immediate_operand_b; /* when we have "#" */
+	char matrix_row_operand_a[MAX_OPERAND_TYPE_SIZE]; /* if we have M1[r1][r2] then r1 goes here. 3 places so '\0' can be added. */
+	char matrix_col_operand_a[MAX_OPERAND_TYPE_SIZE]; /* r2 */
+	char matrix_row_operand_b[MAX_OPERAND_TYPE_SIZE]; /* if we have M2[r3][r4] then r3 goes here. 3 places so '\0' can be added. */
+	char matrix_col_operand_b[MAX_OPERAND_TYPE_SIZE]; /* r4 */
 	char string[MAX_STRING_SIZE]; /* if guidance_command  = .string, check for it's value in this field */
 	int data_arr[MAX_DATA_ARR_SIZE]; /* if guidance command = .data, check for the values in this array */
 	int data_arr_num_of_params; /* how many numbers to take from data_arr */
@@ -80,49 +92,5 @@ extern mem_words_per_operand_type operands_vs_num_of_words_to_use[];
 extern registers registers_table[];
 extern char *saved_languages_words[NUM_OF_SAVED_WORDS];
  
-
-/*
-opcodes opcodes_table[] = {
-	{ "mov", "0000"},
-	{ "cmp", "0001"},
-	{ "add", "0010"},
-	{ "sub", "0011"},
-	{ "not", "0100"},
-	{ "clr", "0101"},
-	{ "lea", "0110"},
-	{ "inc", "0111"},
-	{ "dec", "1000"},
-	{ "jmp", "0101"},
-	{ "bne", "1010"},
-	{ "red", "1011"},
-	{ "prn", "1100"},
-	{ "jsr", "1101"},
-	{ "rts", "1110"},
-	{ "stop", "1111"}
-};
-
- in the table: how many memory words the operand type requires 
-mem_words_per_operand_type operands_vs_num_of_words_to_use[] = {
-	{"00", 1},
-	{"01", 1},
-	{"10", 2},
-	{"11", 1}
-};
-
-int size_opcode_table = sizeof(opcodes_table)/sizeof(opcodes_table[0]);
-
-registers registers_table[] = {
-	{"r0", "000"},
-	{"r1", "001"},
-	{"r2", "010"},
-	{"r3", "011"},
-	{"r4", "100"},
-	{"r5", "101"},
-	{"r6", "110"},
-	{"r7", "111"}
-};
- 
-*/
 #endif
-
 
