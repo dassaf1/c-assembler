@@ -7,20 +7,22 @@
 #include "line_parser.h"
 
 #define OPCODES_TABLE_LENGTH size_opcode_table
+#define LINE_LENGTH 81
+#define CODE_TABLE_START_ADDRESS 100
 
-
-char line[80]; 
+char line[LINE_LENGTH]; 
 char *current_symbol;
 int last_position;
 int syntax_errors = FALSE;
-int IC; 
-int DC;
+int IC = CODE_TABLE_START_ADDRESS;
+int DC = 0;
 int line_number;
 symbol_line *symbol_tail = NULL;
 symbol_line *symbol_head = NULL;
 memory_word *data_tail = NULL;
 memory_word *data_head = NULL;
-
+sentence *sentence_head = NULL;
+sentence *sentence_tail = NULL;
 
 
 /* symbol_exists - 
@@ -140,8 +142,8 @@ int add_string_to_data_table(sentence *curr)
 			exit(1);
 		}
 		
-		binary_char = convert_ascii_value_to_binary(curr->string[i]);
-		strcpy(new_memory_word->bits, binary_char); 
+		convert_ascii_value_to_10_bit_binary(curr->string[i], new_memory_word->bits);
+		
 	
 		if (data_tail)
 			data_tail->next = new_memory_word; 
@@ -208,7 +210,7 @@ int add_matrix_to_data_table(sentence *curr)
 	memory_word* new_memory_word;
 	int added_mem_words = 0;
 	
-	for(i=0; i < (curr->mat_num_of_rows)*(curr->mat_num_of_cols)+1 ; i++) {
+	for(i=0; i < (curr->mat_num_of_rows)*(curr->mat_num_of_cols); i++) {
 	
 	new_memory_word = (memory_word*)malloc(sizeof(memory_word));
 		if (!new_memory_word)
@@ -217,7 +219,7 @@ int add_matrix_to_data_table(sentence *curr)
 			exit(1);
 		}
 	
-	strcpy(new_memory_word->bits, convert_dec_to_binary(curr->mat[i]));
+	convert_dec_to_x_bit_binary(curr->mat[i],10,new_memory_word->bits);
 	if (data_tail)
 		data_tail->next = new_memory_word; 
 	else {
@@ -282,7 +284,7 @@ void add_to_IC_by_operand_type(char *operand)
 void increase_IC_according_sentence(sentence *curr)
 {	
 	IC++;  /* for the action sentence itself */	
-	if(strcmp(curr->source_operand_type,curr->source_operand_type)==0 && strcmp(curr->source_operand_type,"11")==0) {
+	if(strcmp(curr->source_operand_type,curr->dest_operand_type)==0 && strcmp(curr->source_operand_type,REGISTER_OPERAND_TYPE)==0) {
 	/* if both operands are "straight forwards registers" type, they consume a common single word */
 		IC++;
 		return;
@@ -315,68 +317,75 @@ void increase_DC_symbol_address_by_IC_offset()
 }
 
 
-void execute_first_pass(FILE *fd)
+int execute_first_pass(FILE *fd)
 { 
 	sentence *current_sentence;	
 	line_number = 0;	
-	IC = 100;
-	DC = 0;
+	
 		
-	while(fgets(line,80,fd))
+	while(fgets(line,LINE_LENGTH,fd))
 	{	
 		line_number++;		
 		current_sentence = parse_sentence(line, line_number, &syntax_errors);
 	
-		if(current_sentence->is_store_command == TRUE) { 
-			if(current_sentence->is_symbol) { 					
-				if(!symbol_exists(current_sentence->symbol)) {
+		if (current_sentence->is_store_command == TRUE) {
+			if (current_sentence->is_symbol) {
+				if (!symbol_exists(current_sentence->symbol)) {
 					add_to_symbol_table(current_sentence->symbol, DC, 0, DATA);
-					}	
+				}
 				else
-					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 						current_sentence->symbol);
+					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
 			}
-				/* adding into data table. DC is increased: */ 
-					add_to_data_table(current_sentence);				
+			/* adding into data table. DC is increased: */
+			add_to_data_table(current_sentence);
 		}
 
 		else { /* when is_store_command = 0 */
-			if(current_sentence->guidance_command == EXTERN) { /* when is extern */
-				if(current_sentence->is_symbol==1)
-					fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number);
-				 add_to_symbol_table(current_sentence->symbol, -999, 1, NONE);
-			} 
-			else { 
-				if(current_sentence->is_symbol==1) { 
-					if(!symbol_exists(current_sentence->symbol)) {					
-					add_to_symbol_table(current_symbol, IC, 0, CODE);
+			if (current_sentence->guidance_command == EXTERN) { /* when is extern */
+			/*	if(current_sentence->is_symbol==1)
+					fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number); MOVING THIS TO LINE_PARSER.C */
+				add_to_symbol_table(current_sentence->symbol, -999, 1, NONE);
+			}
+			else {
+				if (current_sentence->is_symbol == 1) {
+					if (!symbol_exists(current_sentence->symbol)) {
+						add_to_symbol_table(current_symbol, IC, 0, CODE);
 					}
 					else
-					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, 							current_sentence->symbol);
-				} 
+						fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
+					syntax_errors = TRUE;
+				}
 				/* analyzing sentence so IC is increased by the number of memory words the action sentence takes */
-				if(current_sentence->is_action)				
+				if (current_sentence->is_action)
 					increase_IC_according_sentence(current_sentence);
-			} 
+			}
 		}
-			free(current_sentence);			
-	
+
+		if (sentence_head == NULL) {
+			sentence_head = current_sentence;
+			sentence_tail = sentence_head;
+		}
+		else {
+			sentence_tail->next = current_sentence;
+			sentence_tail = sentence_tail->next;
+		}
 	}
-			/* updating the DC address of each entry in symbol_table with the IC offset, only when 
-													the symbol is of DATA type */
+
+	/*if (syntax_errors == TRUE) {
+	/*	free_data(data_head);
+	/*	free_symbol(symbol_head);
+	/*	free_sentence(sentence_head);
+	/*	return FALSE;
+	/*}
+
+			/* updating the DC address of each entry in symbol_table with the IC offset, only when 													the symbol is of DATA type */
 			increase_DC_symbol_address_by_IC_offset();
-			
+			return TRUE;
 }
 
 
 
 
-/* In assembler.h interface: run_assembler - calls the first and second pass */
-int run_assembler(FILE *fd){
-	
-	execute_first_pass(fd);
-       	return 0;
-
-}
 
 
 
