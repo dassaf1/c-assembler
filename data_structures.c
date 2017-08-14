@@ -23,10 +23,10 @@ int size_opcode_table = sizeof(opcodes_table)/sizeof(opcodes_table[0]);
 
 /* in the table: how many memory words the operand type requires */
 mem_words_per_operand_type operands_vs_num_of_words_to_use[] = {
-	{"00", 1},
-	{"01", 1},
-	{"10", 2},
-	{"11", 1}
+	{IMMEDIATE_OPERAND_TYPE, 1},
+	{DIRECT_OPERAND_TYPE, 1},
+	{MATRIX_OPERAND_TYPE, 2},
+	{REGISTER_OPERAND_TYPE, 1}
 };
 
 registers registers_table[] = {
