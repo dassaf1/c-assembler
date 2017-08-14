@@ -12,6 +12,10 @@
 #define MAX_SYMBOL_SIZE 31
 #define MAX_OPCODE_SIZE 5
 #define MAX_OPERAND_TYPE_SIZE 3
+#define IMMEDIATE_OPERAND_TYPE "00"
+#define DIRECT_OPERAND_TYPE "01"
+#define MATRIX_OPERAND_TYPE "10"
+#define REGISTER_OPERAND_TYPE "11"
 
 enum data_type {NONE, DATA, CODE};
 enum boolean {FALSE, TRUE};
@@ -35,8 +39,8 @@ typedef struct mem_words_per_operand_type {
 
 /* struct for holding a register and it's binary value */
 typedef struct registers {
-	char register_name[2];
-	char register_val[3];
+	char register_name[3];
+	char register_val[4];
 } registers;
 
 typedef struct mat {
@@ -46,7 +50,7 @@ typedef struct mat {
 } mat;
 
 typedef struct symbol_line {
-	char symbol[30];
+	char symbol[MAX_SYMBOL_SIZE];
 	int address;
 	int is_extern;
 	int symbol_type; /* from enum: NONE, DATA, CODE */
