@@ -27,7 +27,8 @@ int get_next_word(char *current_word, char *line, int last_position)
 {	
  	int position = last_position+1;
 	int i = 0;
-	while(line[position] != ' ' && line[position] != ',' && line[position] != '[' && line[position] != ']' && line[position] != '\n' && line[position] != EOF && line[position] != '\0')
+	while(line[position] != ' ' && line[position] != ',' && line[position] != '[' && line[position] != ']' && line[position] != '\n' && line[position] != EOF && line[position] != '\0' 
+		&& line[position] != '\t')
 		{
 			current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
 			i++;
@@ -781,12 +782,12 @@ int validate_operand_for_opcode(sentence *parsed, int op_a, int op_b, int qty_of
 	{
 		if (strcmp(parsed->opcode, opcodes_table[i].opcode) == 0) {
 			if (opcodes_table[i].qty_of_supported_operands < qty_of_ops) {
-				fprinf(stderr, "Error in line %d - too many operands for the opcode %s\n", line_number, parsed->opcode);
+				fprintf(stderr, "Error in line %d - too many operands for the opcode %s\n", line_number, parsed->opcode);
 				syntax_errors = 1;
 				return FALSE;
 			}
 			else if (opcodes_table[i].qty_of_supported_operands > qty_of_ops) {
-				fprinf(stderr, "Error in line %d - too less operands for the opcode %s\n", line_number, parsed->opcode);
+				fprintf(stderr, "Error in line %d - too less operands for the opcode %s\n", line_number, parsed->opcode);
 				syntax_errors = 1;
 				return FALSE;
 			}
