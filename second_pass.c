@@ -250,7 +250,7 @@ void create_object_file() {
     char conversion_result_2[BASE_4_STRAGE_NUMBER_MAX_DIGITS];
     /* write DC and IC size in 4 strange */
     convert_dec_to_base_4_strange(DC, conversion_result_1);
-    convert_dec_to_base_4_strange(IC, conversion_result_2);
+    convert_dec_to_base_4_strange(IC-CODE_TABLE_START_ADDRESS, conversion_result_2);
     add_line_to_file(object_fd, conversion_result_1, conversion_result_2);
     /* write code and data table in 4 strange */
     while (tmp) {
