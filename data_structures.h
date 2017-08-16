@@ -22,6 +22,7 @@ enum boolean {FALSE, TRUE};
 enum guidance {EXTERN, ENTRY, NUM, STRING, MAT}; 
 
 extern int size_opcode_table;
+int size_registers_table;
 
 /* struct for holding an opcode and it's binary value */
 typedef struct opcodes {
