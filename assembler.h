@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-int run_first_pass(FILE *);
+int execute_first_pass(FILE *);
 
 /* void run_second_pass(char *);*/
 #endif
