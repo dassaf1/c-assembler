@@ -40,7 +40,7 @@ typedef struct mem_words_per_operand_type {
 /* struct for holding a register and it's binary value */
 typedef struct registers {
 	char register_name[3];
-	char register_val[4];
+	char register_val[5];
 } registers;
 
 typedef struct mat {
