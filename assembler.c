@@ -31,13 +31,15 @@ sentence *sentence_tail = NULL;
 int symbol_exists(char *current_symbol) 
 {
 	symbol_line *temp = symbol_head; 
+
 	while (temp)
 	{
-		if (strcmp(temp->symbol, current_symbol) == 0) 
+		if (strcmp(temp->symbol, current_symbol) == 0)
 		return TRUE; 
 
 		else
 			temp = temp->next;
+
 	}
 	
 	return FALSE;
@@ -73,6 +75,8 @@ void add_to_symbol_table(char* current_symbol, int address, int is_extern, int s
 		symbol_tail = symbol_tail->next;
 	}
 
+	symbol_tail->next = NULL;
+
 	return;
 
 }
@@ -102,6 +106,8 @@ memory_word* add_to_memory_table(memory_word *tail, char *bits, int counter)
 		tail->next = new_memory_word;
 		tail = tail->next;
 	}
+
+	tail->next = NULL;
 
 	return tail;
 }
@@ -146,7 +152,11 @@ int add_string_to_data_table(sentence *curr)
 		
 	
 		if (data_tail)
-			data_tail->next = new_memory_word; 
+		{
+			data_tail->next = new_memory_word;
+			data_tail = data_tail->next;
+		}
+
 		else {
 			data_head = new_memory_word;
 			data_tail = data_head;
@@ -159,7 +169,10 @@ int add_string_to_data_table(sentence *curr)
 		strcpy(new_memory_word->bits, "00000000\0");
 		
 		added_mem_words++; 
-		data_tail->next = new_memory_word; 
+		data_tail->next = new_memory_word;
+		data_tail = data_tail->next;
+
+		data_tail->next = NULL;
 	
 		return added_mem_words;
 }
@@ -175,7 +188,7 @@ int add_num_to_data_table(sentence *curr)
 	memory_word* new_memory_word;
 	int added_mem_words = 0;
 	
-	for(i=0; i < curr->data_arr_num_of_params+1 ; i++) {
+	for(i=0; i < curr->data_arr_num_of_params ; i++) {
 	
 	new_memory_word = (memory_word*)malloc(sizeof(memory_word));
 		if (!new_memory_word)
@@ -185,9 +198,12 @@ int add_num_to_data_table(sentence *curr)
 		}
 	
 	convert_dec_to_x_bit_binary(curr->data_arr[i],10,converted_to_bits);
-	strcpy(new_memory_word->bits,converted_to_bits);
-	if (data_tail)
-		data_tail->next = new_memory_word; 
+    strcpy(new_memory_word->bits,converted_to_bits);
+	if (data_tail) 
+	{
+		data_tail->next = new_memory_word;
+		data_tail = data_tail->next;
+	}
 	else {
 		data_head = new_memory_word;
 		data_tail = data_head;
@@ -195,6 +211,8 @@ int add_num_to_data_table(sentence *curr)
 		
 		added_mem_words++; 	 
 	}
+
+	data_tail->next = NULL;
 		
 	return added_mem_words;
 }
@@ -221,7 +239,10 @@ int add_matrix_to_data_table(sentence *curr)
 	
 	convert_dec_to_x_bit_binary(curr->mat[i],10,new_memory_word->bits);
 	if (data_tail)
-		data_tail->next = new_memory_word; 
+	{
+		data_tail->next = new_memory_word;
+		data_tail = data_tail->next;
+	}
 	else {
 		data_head = new_memory_word;
 		data_tail = data_head;
@@ -229,6 +250,8 @@ int add_matrix_to_data_table(sentence *curr)
 		
 		added_mem_words++; 	 
 	}
+
+	data_tail->next = NULL;
 		
 	return added_mem_words;
 }
@@ -316,6 +339,58 @@ void increase_DC_symbol_address_by_IC_offset()
 	return;
 }
 
+/* free_data - 
+   receives: the head of the data list and free memory. */
+void free_data(memory_word *data_head)
+{
+	memory_word *temp;
+
+	while (data_head)
+	{
+		temp = data_head->next;
+		free(data_head);
+		data_head = temp;
+	}
+
+	return;
+
+}
+
+/* free_symbol -
+   receives: the head of the symbol list and free memory. */
+void free_symbol(symbol_line *symbol_head)
+{
+	symbol_line *temp;
+
+	while (symbol_head)
+	{
+		temp = symbol_head->next;
+		free(symbol_head);
+		symbol_head = temp;
+	}
+
+	return;
+
+}
+
+/* free_sentence -
+   receives: the head of the symbol list and free memory. */
+void free_sentence(sentence *sentence_head)
+{
+	sentence *temp;
+
+	while (sentence_head)
+	{
+		temp = sentence_head->next;
+		free(sentence_head);
+		sentence_head = temp;
+	}
+
+	return;
+
+}
+
+
 
 int execute_first_pass(FILE *fd)
 { 
@@ -349,11 +424,13 @@ int execute_first_pass(FILE *fd)
 			else {
 				if (current_sentence->is_symbol == 1) {
 					if (!symbol_exists(current_sentence->symbol)) {
-						add_to_symbol_table(current_symbol, IC, 0, CODE);
+						add_to_symbol_table(current_sentence->symbol, IC, 0, CODE);
 					}
 					else
+					{
 						fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
-					syntax_errors = TRUE;
+						syntax_errors = TRUE;
+					}
 				}
 				/* analyzing sentence so IC is increased by the number of memory words the action sentence takes */
 				if (current_sentence->is_action)
@@ -361,7 +438,7 @@ int execute_first_pass(FILE *fd)
 			}
 		}
 
-		if (sentence_head == NULL) {
+		if (sentence_head == NULL) { /* head to the parsed sentence list - so if we go through 2nd pass we won't need to parse the line again */
 			sentence_head = current_sentence;
 			sentence_tail = sentence_head;
 		}
@@ -371,12 +448,12 @@ int execute_first_pass(FILE *fd)
 		}
 	}
 
-	/*if (syntax_errors == TRUE) {
-	/*	free_data(data_head);
-	/*	free_symbol(symbol_head);
-	/*	free_sentence(sentence_head);
-	/*	return FALSE;
-	/*}
+	if (syntax_errors == TRUE) {
+		free_data(data_head);
+		free_symbol(symbol_head);
+		free_sentence(sentence_head);
+		return FALSE;
+	}
 
 			/* updating the DC address of each entry in symbol_table with the IC offset, only when 													the symbol is of DATA type */
 			increase_DC_symbol_address_by_IC_offset();
