@@ -40,6 +40,8 @@ registers registers_table[] = {
 	{"r7", "0111"}
 };
 
+int size_registers_table = sizeof(registers_table)/sizeof(registers_table[0]);
+
 char *saved_languages_words[NUM_OF_SAVED_WORDS] = {"extern", "entry", "data", "mat", "string", "mov", "cmp", "add", "sub", "not", "clr", "lea", 
 					"inc", "dec", "jmp", "bne", "red", "prn", "jsr", "rts", "stop", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 
