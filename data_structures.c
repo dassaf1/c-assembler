@@ -30,14 +30,14 @@ mem_words_per_operand_type operands_vs_num_of_words_to_use[] = {
 };
 
 registers registers_table[] = {
-	{"r0", "000"},
-	{"r1", "001"},
-	{"r2", "010"},
-	{"r3", "011"},
-	{"r4", "100"},
-	{"r5", "101"},
-	{"r6", "110"},
-	{"r7", "111"}
+	{"r0", "0000"},
+	{"r1", "0001"},
+	{"r2", "0010"},
+	{"r3", "0011"},
+	{"r4", "0100"},
+	{"r5", "0101"},
+	{"r6", "0110"},
+	{"r7", "0111"}
 };
 
 char *saved_languages_words[NUM_OF_SAVED_WORDS] = {"extern", "entry", "data", "mat", "string", "mov", "cmp", "add", "sub", "not", "clr", "lea", 
