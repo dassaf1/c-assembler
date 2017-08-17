@@ -3,6 +3,7 @@
 #include <string.h>
 #include "data_structures.h"
 #include "number_conversions.h"
+#include "assembler.h"
 
 
 #define ABSOLUTE_ARE "00"
@@ -12,7 +13,6 @@
 #define DIRECT_DELIVERY_METHOD "01" /* should to be GLOBAL */
 #define MATRIX_DELIVERY_METHOD "10" /* should to be GLOBAL */
 #define REGISTER_DELIVERY_METHOD "11" /* should to be GLOBAL */
-#define CODE_TABLE_START_ADDRESS 100 /* should to be GLOBAL */
 #define MAX_FILE_NAME_SIZE 100 /* should to be GLOBAL */
 #define BASE_4_STRAGE_NUMBER_MAX_DIGITS 10
 #define INPUT_FILE_MAX_LINE_SIZE 81 /* should to be GLOBAL */
@@ -28,12 +28,6 @@ char input_filename[MAX_FILE_NAME_SIZE];
 char object_filename[MAX_FILE_NAME_SIZE];
 char extern_filename[MAX_FILE_NAME_SIZE];
 char intern_filename[MAX_FILE_NAME_SIZE];
-
-int IC = 116; /* DATA received from first pass */
-int DC = 12; /* DATA received from first pass */
-/*sentence * sentence_head;  DATA received from first pass */
-symbol_line * symbol_head = NULL; /*  DATA received from first pass */
-memory_word * data_head = NULL; /*  DATA received from first pass */
 
 int ic_second_pass = CODE_TABLE_START_ADDRESS;
 int is_error_found = 0;

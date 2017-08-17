@@ -5,25 +5,25 @@
 #include "data_structures.h"
 #include "number_conversions.h"
 #include "line_parser.h"
+#include "assembler.h"
 
 #define OPCODES_TABLE_LENGTH size_opcode_table
 #define LINE_LENGTH 81
-#define CODE_TABLE_START_ADDRESS 100
 
 char line[LINE_LENGTH]; 
 char *current_symbol;
 int last_position;
 int syntax_errors = FALSE;
+int line_number;
+
 int IC = CODE_TABLE_START_ADDRESS;
 int DC = 0;
-int line_number;
 symbol_line *symbol_tail = NULL;
 symbol_line *symbol_head = NULL;
 memory_word *data_tail = NULL;
 memory_word *data_head = NULL;
 sentence *sentence_head = NULL;
 sentence *sentence_tail = NULL;
-
 
 /* symbol_exists - 
  receives: the head of the symbols table, the current symbol. The function searches within the list if the symbol already exists.
