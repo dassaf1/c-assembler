@@ -2,6 +2,7 @@
 #define _ASSEMBLER_H_
 
 #include <stdio.h>
+#include "data_structures.h"
 #define CODE_TABLE_START_ADDRESS 100
 
 int IC;
