@@ -562,6 +562,20 @@ int get_next_operand(char *current_word, char *line, int last_position)
 	return position;
 }
 
+
+/* valid_reg_digit - 
+	receives: a char.
+	returns: 1 if the char is a number between 0 to 7, 0 if not. 
+	*/
+int valid_reg_digit(char digit_char) {
+	if (digit_char < '0' || digit_char > '7')
+		return 0;
+	else
+		return 1;
+}
+
+
+
 /* get_matrix - 
 	receives: the word from the line, a line number, a pointer to syntax errors.
 	Returns a struct of type matrix that holds the registers and the matrix name.*/
@@ -769,16 +783,6 @@ void detect_operand(char operand_position, sentence *parsed, char *temp_word, in
 }
 
 
-/* valid_reg_digit - 
-	receives: a char.
-	returns: 1 if the char is a number between 0 to 7, 0 if not. 
-	*/
-int valid_reg_digit(char digit_char) {
-	if (digit_char < '0' || digit_char > '7')
-		return 0;
-	else
-		return 1;
-}
 
 
 /* check_destination_address_type -
