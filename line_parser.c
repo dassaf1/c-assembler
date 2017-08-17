@@ -545,7 +545,7 @@ int get_next_operand(char *current_word, char *line, int last_position)
 		return position;
 	}
 
-	while (line[position] != ',' && line[position] != '\n' && line[position] != EOF && line[position] != '\0' && line[position] != '\t')
+	while (line[position] != ',' && line[position] != '\n' && line[position] != ' ' && line[position] != EOF && line[position] != '\0' && line[position] != '\t')
 	{
 		current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
 		i++;
@@ -553,8 +553,11 @@ int get_next_operand(char *current_word, char *line, int last_position)
 	}
 	current_word[i] = '\0';
 
-	if (is_current_word_empty(current_word))
-		position = get_next_operand(current_word, line, position);
+	/*  if (is_current_word_empty(current_word) && line[position] != '\0' && line[position] != '\n' && line[position] != EOF)
+		position = get_next_operand(current_word, line, position); */
+
+	 if (is_current_word_empty(current_word))
+		position = get_next_operand(current_word, line, position+1); 
 
 	return position;
 }
@@ -894,10 +897,9 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 	detect_operand('a', parsed, temp_word, line_number, syntax_errors, &operands_in_sentence, &temp_operand_type_a);
 
 	/* finish pass over 1st operand */
-
+	new_position = skip_spaces(line, new_position);
 	if (line[new_position] == ',') {
-		new_position = skip_spaces(line, new_position + 1);
-		new_position = get_next_operand(temp_word, line, new_position);
+		new_position = get_next_operand(temp_word, line, new_position+1);
 
 		if (is_current_word_empty(temp_word)) {
 			fprintf(stderr, "Error in line %d - missing operand after comma\n", line_number);
@@ -907,14 +909,21 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 		/* check for 2nd operand, increase operands_in_sentence if found other operand */
 		detect_operand('b', parsed, temp_word, line_number, syntax_errors, &operands_in_sentence, &temp_operand_type_b);
 	}
+	
+	if (line[new_position] != '\n' && line[new_position] != EOF && line[new_position] != '\0')
+	{
+		fprintf(stderr, "Error in line %d - too many operands in line\n", line_number);
+		return;
+	}
 
-	new_position = skip_spaces(line, new_position);
-	new_position = get_next_operand(temp_word, line, new_position);
+	/* new_position = skip_spaces(line, new_position);
+	 new_position = get_next_operand(temp_word, line, new_position); 
 
 	if (!is_current_word_empty(temp_word)) {
 		fprintf(stderr, "Error in line %d - wrong operands format\n", line_number);
 		return;
 	}
+	*/
 
 	parsed->num_of_operands = operands_in_sentence;
 
@@ -922,9 +931,12 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 	{
 
 		strcpy(parsed->dest_operand_type, parsed->source_operand_type); /* 3 places so '\0' can be added - miunim */
+		strcpy(parsed->source_operand_type, "");
 		strcpy(parsed->operand_2, parsed->operand_1);  /* for variables, registers, matrixes */
+		strcpy(parsed->operand_1, "");
 		parsed->immediate_operand_b = parsed->immediate_operand_a; /* when we have "#" */
 		strcpy(parsed->matrix_row_operand_b, parsed->matrix_row_operand_a); /* if we have M1[r1][r2] then r1 goes here */
+		strcpy(parsed->matrix_col_operand_a, "");
 		if (validate_operand_for_opcode(parsed, temp_operand_type_a, -999, operands_in_sentence, line_number,syntax_errors))
 			convert_dec_to_x_bit_binary(temp_operand_type_a, 3, parsed->dest_operand_type); /* VERIFY THE FUNCTION IS CORRECT */
 		else
