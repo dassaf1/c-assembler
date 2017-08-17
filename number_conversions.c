@@ -76,12 +76,9 @@ void convert_dec_to_x_bit_binary(int num, int bits, char * result){
     }
 }
 
-/* Coverts an alphabetic char into its binary value using 10 bits (using zero padding)
+/* Coverts an alphabetic char into its binary value using 10 bits (with zero padding)
 * When calling the function array of chars sized number of bits + 1 (for '\0') should be provided (char * result) */
 void convert_ascii_value_to_10_bit_binary(char c, char * result){
-    if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))) {
-        fprintf(stderr, "ERROR: char is not an alphabetic character");
-    }
     convert_dec_to_x_bit_binary(c, 11, result);
 }
 

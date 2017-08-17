@@ -212,7 +212,12 @@ void append_data_table_into_end_of_code_table(memory_word * data_head) {
         tmp = tmp->next;
         ic_second_pass++;
     }
-    code_tail->next = data_head;
+    if (code_head) { /* There is at least one instruction sentence */
+        code_tail->next = data_head;
+    }
+    else { /* There are no instruction sentences */
+        code_head = data_head;
+    }
 }
 
 void add_line_to_file(FILE * fd, char * column_a, char * column_b) {
@@ -287,10 +292,10 @@ void close_second_pass_output_files() {
 
 void execute_second_pass(char * filename) {
 
-    /*sentence * current_sentence = sentence_head;    ENABLE THIS AFTER DELETION OF FOR TEST BLOCK!! */
+    sentence * current_sentence = sentence_head;   /* ENABLE THIS AFTER DELETION OF FOR TEST BLOCK!! */
 
     /* FOR TEST */
-    sentence * sent1 = (sentence *)malloc(sizeof(sentence));
+/*    sentence * sent1 = (sentence *)malloc(sizeof(sentence));
     sentence * sent2 = (sentence *)malloc(sizeof(sentence));
     sentence * sentence_head = sent1;
     sentence * current_sentence = sentence_head;
@@ -311,7 +316,7 @@ void execute_second_pass(char * filename) {
     sent1->immediate_operand_b = 7;
     sent1->next = sent2;
 
-    /* END FOR TEST */
+     END FOR TEST */
 
     strcpy(input_filename, filename);
     combine_filename_with_new_file_extension(input_filename, object_filename, OBJECT_FILE_EXTENSION);
@@ -444,7 +449,7 @@ int main() {
 
     /*  TESTING BLOCK ********************************** */
 
-    symbol_line * sl1 = (symbol_line*)malloc(sizeof(symbol_line));
+    /*symbol_line * sl1 = (symbol_line*)malloc(sizeof(symbol_line));
     symbol_line * sl2 = (symbol_line*)malloc(sizeof(symbol_line));
     symbol_line * sl3 = (symbol_line*)malloc(sizeof(symbol_line));
 
@@ -454,9 +459,12 @@ int main() {
 
     strcpy(sl2->symbol, "W");
     sl2->address = 8;
-    sl2->is_extern = 1;
+    sl2->is_extern = 1;*/
 
     char filename[] = "file.as";
+    FILE * fd = fopen(filename, "r");
+
+    execute_first_pass(fd);
     execute_second_pass(filename);
 
     print_memory_word_list(code_head);
