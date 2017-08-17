@@ -116,6 +116,13 @@ int is_symbol(char *current_word, int line_number, int *syntax_errors, int begin
 		}
 
 		else
+		{
+			if (!is_saved_word(current_word, line_number, syntax_errors, 0)) {
+				fprintf(stderr, "Error in line %d - the symbol is missing ':'\n", line_number);
+				*syntax_errors = 1;
+			}
+
+		}
 			return FALSE;
 	}
 
@@ -327,7 +334,8 @@ void verify_and_save_matrix(sentence *parsed, char * line, int last_position, in
 	int number;
 	int mat_arr_idx = 0;
 
-	new_position = get_next_word(parsed->symbol,line,last_position);
+	/* new_position = get_next_word(parsed->symbol,line,last_position); */
+	new_position = skip_spaces(line, last_position);
 
 	while (num_of_brackets < 4) {
 		if (expecting_open_bracket) {
@@ -390,7 +398,7 @@ void verify_and_save_matrix(sentence *parsed, char * line, int last_position, in
 	while (line[new_position] != '\0' && line[new_position] != '\n' && line[new_position] != '\t' && line[new_position] != EOF && mat_arr_idx < (MAX_ROWS * MAX_COLS)) {
 
 		new_position = get_next_member(temp_member, line, line_number, new_position, syntax_errors, &expecting_comma);
-		number = atoi(temp_member);
+		number = atoi(temp_member); /* checking that the matrix col / row number is legal */
 
 		if (number > 511 || number < -512) {
 			fprintf(stderr, "Error in line %d - the range of numbers that can be translated with assembler that works with 10 bits is from -512 to 511. Number %d cannot be stored.\n", line_number, number);
@@ -562,19 +570,16 @@ int get_next_operand(char *current_word, char *line, int last_position)
 	return position;
 }
 
-
-/* valid_reg_digit - 
-	receives: a char.
-	returns: 1 if the char is a number between 0 to 7, 0 if not. 
-	*/
+/* valid_reg_digit -
+receives: a char.
+returns: 1 if the char is a number between 0 to 7, 0 if not.
+*/
 int valid_reg_digit(char digit_char) {
 	if (digit_char < '0' || digit_char > '7')
 		return 0;
 	else
 		return 1;
 }
-
-
 
 /* get_matrix - 
 	receives: the word from the line, a line number, a pointer to syntax errors.
@@ -784,7 +789,6 @@ void detect_operand(char operand_position, sentence *parsed, char *temp_word, in
 
 
 
-
 /* check_destination_address_type -
 	receives: the current external iteration and the operand type. 
 	The function checks over the operands in the opcodes table that the type is one of it's destination address types.
@@ -892,9 +896,10 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 	new_position = get_next_operand(temp_word, line, new_position); /* TODO: get_next_operand - stops at ',' \n or EOF: doesn't stop in ' ' */
 
 	if (is_current_word_empty(temp_word)) {
-		fprintf(stderr, "Error in line %d - missing operand after comma\n", line_number);
+/*		fprintf(stderr, "Error in line %d - missing operand after comma\n", line_number);*/
 		return;
 	}
+
 
 	/*detect 1st operand */
 
@@ -989,6 +994,17 @@ void init_sentence(sentence *parsed)
 
 }
 		
+/* line_is_empty - 
+   receives: the line to parse.
+   returns true is the line is empty, or false if not. */
+int line_is_empty(char *line)
+{
+	int i;
+	i = skip_spaces(line, 0);
+
+	return (line[i] == '\n' || line[i] == EOF);
+		
+}
 
 /* parse_sentence - 
    receives: the line to be parsed and the current line number.
@@ -1009,6 +1025,8 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_errors) {
 			exit(1);
 		}
 
+	if (line_is_empty(line))
+		return NULL;
 	
 	init_sentence(parsed);
 	 
