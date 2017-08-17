@@ -166,7 +166,7 @@ int add_string_to_data_table(sentence *curr)
 	}
 		/* adding '\0' to data table at the end of the string */
 		new_memory_word = (memory_word*)malloc(sizeof(memory_word));
-		strcpy(new_memory_word->bits, "00000000\0");
+		strcpy(new_memory_word->bits, "0000000000");
 		
 		added_mem_words++; 
 		data_tail->next = new_memory_word;
@@ -400,9 +400,17 @@ int execute_first_pass(FILE *fd)
 		
 	while(fgets(line,LINE_LENGTH,fd))
 	{	
+		/* ADD TO CHANGES */
 		line_number++;		
+		if (line[0] == ';')
+			continue;
+
 		current_sentence = parse_sentence(line, line_number, &syntax_errors);
-	
+
+		/* ADD TO CHANGES */
+		if (current_sentence == NULL) /* if line is empty parse_sentence returns null */
+			continue;
+
 		if (current_sentence->is_store_command == TRUE) {
 			if (current_sentence->is_symbol) {
 				if (!symbol_exists(current_sentence->symbol)) {
