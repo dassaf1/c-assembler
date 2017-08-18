@@ -471,6 +471,7 @@ int execute_first_pass(FILE *fd)
 	}
 
 	if (syntax_errors == TRUE) {
+		printf("FREE LIST: SYNTAX_ERROR = 1\n");
 		free_data(data_head);
 		free_symbol(symbol_head);
 		free_sentence(sentence_head);
