@@ -596,18 +596,18 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 
 	/*mat name*/
 
-	while (word[i] != '[' && word[i] != '\0') {
+	while (word[i] != '[' && word[i] != '\0' && word[i] != '\t' && word[i] != ' ') {
 		my_mat->mat_name[i] = word[i];
 		i++;
 	}
 
 	my_mat->mat_name[i] = '\0';
-
+	i = skip_spaces(word, i);
 
 	/*check it didn't end yet*/
 
-	if (word[i] == '\0') {
-		/*fprintf(stderr, "Error in line %d -  mat range expected\n", line_number);*/
+	if (word[i] == '\0' || word[i] == EOF || word[i] == '\n') {
+		fprintf(stderr, "Error in line %d -  mat range expected\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
@@ -620,8 +620,16 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 		*syntax_errors = 1;
 		return NULL;
 	}
+	
+	/*open brackets*/
+	if (tolower(word[i]) != '[') {
+		fprintf(stderr, "Error in line %d -  expected open brackets\n", line_number);
+		*syntax_errors = 1;
+		return NULL;
 
+	}
 	i++;
+	i = skip_spaces(word, i);
 
 	/*first reg*/
 
@@ -647,23 +655,31 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	}
 
 	i++;
-
+	i = skip_spaces(word, i);
 	/*check it didn't end yet*/
 
-	if (word[i] == '\0') {
+	if (word[i] == '\0' || word[i] == EOF || word[i] == '\n') {
 		fprintf(stderr, "Error in line %d -  expecting second range\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
 
 
-	if (word[i] != ']' && word[i] != '[') {
+	if (word[i] != ']') {
 		fprintf(stderr, "Error in line %d -  invalid mat brackets format\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
+	i++;
+	i = skip_spaces(word, i);
 
-	i += 2;
+	if (word[i] != '[') {
+		fprintf(stderr, "Error in line %d -  invalid mat brackets format\n", line_number);
+		*syntax_errors = 1;
+		return NULL;
+	}
+	i++;
+	i = skip_spaces(word, i);
 
 	/*second reg*/
 	if (tolower(word[i]) != 'r') {
@@ -689,12 +705,13 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	i++;
 	i = skip_spaces(word, i);
 
-	if (word[i] != ']' && word[i] != '[') {
+	if (word[i] != ']') {
 		fprintf(stderr, "Error in line %d -  invalid mat brackets format\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
 	i++;
+	i = skip_spaces(word, i);
 
 	if (word[i] != '\0') {
 		fprintf(stderr, "Error in line %d - unexpected characters after matrix usage\n", line_number);
