@@ -151,7 +151,7 @@ void encode_register(char * register_names[], char * operand_type) {
         is_error_found = 1;
         return;
     }
-    for(i = 0; i < size_registers_table; i++) {
+    for(i = 0; i < OPCODES_TABLE_LENGTH; i++) {
         if (strcmp(registers_table[i].register_name, register_names[0]) == 0) {
             strcpy(register1_val, registers_table[i].register_val);
         }
@@ -191,13 +191,23 @@ void encode_instruction(sentence * curr) {
     int i;
     memory_word * new_memory_word = create_new_memory_word();
 	new_memory_word->address = ic_second_pass;
-	for(i = 0; i < size_opcode_table; i++) {
+	for(i = 0; i < OPCODES_TABLE_LENGTH; i++) {
         if (strcmp(opcodes_table[i].opcode, curr->opcode) == 0) {
             strcpy(new_memory_word->bits, opcodes_table[i].binary_val);
+            break;
         }
     }
-    strcat(new_memory_word->bits, curr->source_operand_type);
-    strcat(new_memory_word->bits, curr->dest_operand_type);
+    if (curr->num_of_operands == 2) {
+        strcat(new_memory_word->bits, curr->source_operand_type);
+        strcat(new_memory_word->bits, curr->dest_operand_type);
+    }
+    else if (curr->num_of_operands == 1) {
+        strcat(new_memory_word->bits, "00");
+        strcat(new_memory_word->bits, curr->dest_operand_type);
+    }
+    else {
+        strcat(new_memory_word->bits, "0000");
+    }
     strcat(new_memory_word->bits, ABSOLUTE_ARE); /* Instruction is always type absolute */
     add_item_to_code_list(new_memory_word);
     ic_second_pass++;
@@ -362,7 +372,7 @@ void execute_second_pass(char * filename) {
                     encode_register(register_names, "source");
                 }
             }
-            if (current_sentence->num_of_operands == 1) { /* instruction sentence with 1 operand */
+            if (current_sentence->num_of_operands == 1 || current_sentence->num_of_operands == 2) { /* instruction sentence with 1 operand */
             /* encode destination operand */
                 if (strcmp(current_sentence->dest_operand_type, IMMEDIATE_DELIVERY_METHOD) == 0) {
                     encode_immediate_operand(current_sentence->immediate_operand_b);
