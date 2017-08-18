@@ -429,9 +429,13 @@ void verify_and_save_matrix(sentence *parsed, char * line, int last_position, in
 		fprintf(stderr, "Error in line %d - data can\'t end with a comma\n", line_number);
 
 	/* end of storing matrix numbers into the matrix array */
-	if (num_of_numbers_to_expect_to != mat_arr_idx)
-		fprintf(stderr, "Error in line %d - wrong ammount of numbers for the declared matrix\n", line_number);
 
+	if (num_of_numbers_to_expect_to < mat_arr_idx)
+		fprintf(stderr, "Error in line %d - too many numbers for the declared size of matrix\n", line_number);
+
+/*	if (num_of_numbers_to_expect_to != mat_arr_idx)
+		fprintf(stderr, "Error in line %d - wrong ammount of numbers for the declared matrix\n", line_number);
+		*/
 	return;
 
 }
@@ -752,16 +756,17 @@ void detect_operand(char operand_position, sentence *parsed, char *temp_word, in
 		}
 		else if (operand_position == 'a') /* if we are checking the operand in the 1st place after the opcode */
 		{
-			parsed->immediate_operand_a = atoi(temp_word + 1);
+			parsed->immediate_operand_a = atoi(temp_word);
 			strcpy(parsed->source_operand_type, IMMEDIATE_OPERAND_TYPE);
 		}
 		else /* if we are checking the operand in the 2nd place after the opcode */
 		{
-			parsed->immediate_operand_b = atoi(temp_word + 1);
+			parsed->immediate_operand_b = atoi(temp_word);
 			strcpy(parsed->dest_operand_type, IMMEDIATE_OPERAND_TYPE);
 		}
 		if ((atoi(temp_word) > 127 || atoi(temp_word) < -128)) {
 			fprintf(stderr, "Error in line %d - the value after an immediate operand must be a number\n", line_number);
+			*syntax_errors = TRUE;
 			return;
 		}
 		}
