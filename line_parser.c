@@ -115,14 +115,15 @@ int is_symbol(char *current_word, int line_number, int *syntax_errors, int begin
 			return !is_saved_word(current_word, line_number, syntax_errors, print_err);
 		}
 
-		else
-		{
+		/*else
+		{     THIS IS DOING TOO MUCH PROBLEMS !!!!!!!!!! 
 			if (!is_saved_word(current_word, line_number, syntax_errors, 0)) {
 				fprintf(stderr, "Error in line %d - the symbol is missing ':'\n", line_number);
 				*syntax_errors = 1;
 			}
 
-		}
+		} */
+
 			return FALSE;
 	}
 
@@ -984,6 +985,8 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
    The function initiates all values to 0, empty or null in order to avoid garbage in fields. */
 void init_sentence(sentence *parsed)
 {
+	int i;
+
 	parsed->is_symbol = 0;
 	parsed->is_action = 0;
 	parsed->is_store_command = -1;
@@ -1002,9 +1005,18 @@ void init_sentence(sentence *parsed)
 	strcpy(parsed->matrix_row_operand_b, "\0");
 	strcpy(parsed->matrix_col_operand_b, "\0");
 	strcpy(parsed->string, "\0");
-	parsed->data_arr;
-	parsed->data_arr_num_of_params;
-	parsed->mat;
+	
+	for (i = 0; i < MAX_DATA_ARR_SIZE; i++)
+	{
+		parsed->data_arr[i] = 0;
+	}
+	
+	for (i = 0; i < MAX_ROWS * MAX_COLS; i++)
+	{
+		parsed->mat[i] = 0;
+	}
+
+	parsed->data_arr_num_of_params = 0;
 	parsed->mat_num_of_rows = 0;
 	parsed->mat_num_of_cols = 0;
 	parsed->next = NULL;
