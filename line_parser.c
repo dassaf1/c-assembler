@@ -60,9 +60,12 @@ int is_saved_word(char *current_word, int line_number, int *syntax_errors, int p
 	for(i = 0; i < NUM_OF_SAVED_WORDS; i++) 
 	{	
 		if (strcmp(current_word,saved_languages_words[i])==0) {
-			if (print_err)
+			if (print_err) /*print error will also set syntax errors flag if a the symbol is forbidden to be a saved word*/
+			{
 				printf("Error in line %d - the word %s is a saved word in the language\n", line_number, current_word);
-		*syntax_errors = TRUE;
+				*syntax_errors = TRUE;
+			}
+		
 		return TRUE;
 		}
 	}	
@@ -115,16 +118,17 @@ int is_symbol(char *current_word, int line_number, int *syntax_errors, int begin
 			return !is_saved_word(current_word, line_number, syntax_errors, print_err);
 		}
 
-		/*else
-		{     THIS IS DOING TOO MUCH PROBLEMS !!!!!!!!!! 
+		else
+		{     
 			if (!is_saved_word(current_word, line_number, syntax_errors, 0)) {
 				fprintf(stderr, "Error in line %d - the symbol is missing ':'\n", line_number);
 				*syntax_errors = 1;
 			}
-
-		} */
-
 			return FALSE;
+
+		} 
+
+
 	}
 
 	else if (length <= 30 && is_alphanumeric(current_word))
@@ -217,19 +221,18 @@ int get_next_member(char *temp_member, char *line, int line_number, int last_pos
 		/*handle:
 		2. add flag 'number ended' and prevent number after space
 		3. check if finished with comma in outer func*/
-		if (line[new_position] == '-') {
-			if (is_negative == 0 && i == 0) {
-				is_negative = 1;
-				temp_member[i] = '-';
+		if (line[new_position] == '-' || line[new_position] == '+') {
+			if (i == 0) {
+				temp_member[i] = line[new_position];
 				i++;
 			}
 			else
 			{
-				fprintf(stderr, "Error in line %d - unexpected '-'\n", line_number);
+				fprintf(stderr, "Error in line %d - number expected\n", line_number);
 				*syntax_errors = 1;
 			}
 		}
-
+		
 		else if (isdigit(line[new_position]) && number_ended == 0) {
 			*expecting_comma = 1; /* we can get a comma after getting at least 1 digit */
 			temp_member[i] = line[new_position];
@@ -316,6 +319,14 @@ void verify_and_save_numbers(sentence *parsed, char * line, int last_position, i
 }
 
 
+void mat_range_is_valid(int range, int max_possible, int *line_number, int *syntax_errors) {
+
+	if (range < 0 || range > max_possible) {
+		fprintf(stderr, "Error in line %d - data can\'t end with a comma\n", line_number);
+		*syntax_errors = 1;
+	}
+	return;
+}
 
 /* verify_and_save_matrix -
 receives: the sentence struct were the parse is stored, the last position of the line, the line number and pointer to
@@ -365,10 +376,12 @@ void verify_and_save_matrix(sentence *parsed, char * line, int last_position, in
 					i = 0;
 					memset(temp_member, 0, sizeof(MAX_DIGITS_SIZE)); /* like &temp_arr[0]  */
 					expecting_open_bracket = 1;
+					mat_range_is_valid(parsed->mat_num_of_rows,MAX_ROWS,line_number,syntax_errors);
 				}
 				if (num_of_brackets == 4) {
 					parsed->mat_num_of_cols = atoi(temp_member);
 					expecting_number = 0;
+					mat_range_is_valid(parsed->mat_num_of_cols, MAX_COLS, line_number, syntax_errors);
 				}
 			}
 		}
@@ -399,7 +412,7 @@ void verify_and_save_matrix(sentence *parsed, char * line, int last_position, in
 	while (line[new_position] != '\0' && line[new_position] != '\n' && line[new_position] != '\t' && line[new_position] != EOF && mat_arr_idx < (MAX_ROWS * MAX_COLS)) {
 
 		new_position = get_next_member(temp_member, line, line_number, new_position, syntax_errors, &expecting_comma);
-		number = atoi(temp_member); /* checking that the matrix col / row number is legal */
+		number = atoi(temp_member);
 
 		if (number > 511 || number < -512) {
 			fprintf(stderr, "Error in line %d - the range of numbers that can be translated with assembler that works with 10 bits is from -512 to 511. Number %d cannot be stored.\n", line_number, number);
@@ -595,6 +608,9 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	strcpy(my_mat->reg_col, "");
 	strcpy(my_mat->mat_name, "");
 
+	/*When this function is called, We don't know if word is a matrix or not
+	 we'll parse the word as a speculative matrix, and return NULL if it's not*/
+
 	/*mat name*/
 
 	while (word[i] != '[' && word[i] != '\0' && word[i] != '\t' && word[i] != ' ') {
@@ -608,34 +624,42 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	/*check it didn't end yet*/
 
 	if (word[i] == '\0' || word[i] == EOF || word[i] == '\n') {
-		fprintf(stderr, "Error in line %d -  mat range expected\n", line_number);
-		*syntax_errors = 1;
+		/*fprintf(stderr, "Error in line %d -  mat range expected\n", line_number);
+		*syntax_errors = 1;*/
 		return NULL;
 	}
 
 	/*check mat_name is valid symbol*/
 
-	if (!is_symbol(my_mat->mat_name, line_number, syntax_errors, FALSE, TRUE) || is_saved_word(my_mat->mat_name, line_number, syntax_errors, TRUE)) {
+	if (!is_symbol(my_mat->mat_name, line_number, syntax_errors, FALSE, FALSE) || is_saved_word(my_mat->mat_name, line_number, syntax_errors, TRUE)) {
 
-		fprintf(stderr, "Error in line %d -  invalid name of matrix\n", line_number);
-		*syntax_errors = 1;
+		/*fprintf(stderr, "Error in line %d -  invalid name of matrix\n", line_number);
+		*syntax_errors = 1;*/
 		return NULL;
 	}
 	
 	/*open brackets*/
 	if (tolower(word[i]) != '[') {
-		fprintf(stderr, "Error in line %d -  expected open brackets\n", line_number);
-		*syntax_errors = 1;
+		/*fprintf(stderr, "Error in line %d -  expected open brackets\n", line_number);
+		*syntax_errors = 1;*/
 		return NULL;
 
 	}
+	
+	/*Here we saw open brackets and we assume this should be a matrix, hence we'll print errors about mat syntax*/
 	i++;
 	i = skip_spaces(word, i);
+
+	/*we expact:
+	1. first reg
+	2. close and open brackets
+	3. second reg
+	4. close brackets*/
 
 	/*first reg*/
 
 	if (tolower(word[i]) != 'r') {
-		fprintf(stderr, "Error in line %d -  first mat idx should be reg\n", line_number);
+		fprintf(stderr, "Error in line %d -  expecting register as first matrix range\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 
@@ -654,37 +678,26 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 		*syntax_errors = 1;
 		return NULL;
 	}
-
 	i++;
-	i = skip_spaces(word, i);
-	/*check it didn't end yet*/
-
-	if (word[i] == '\0' || word[i] == EOF || word[i] == '\n') {
-		fprintf(stderr, "Error in line %d -  expecting second range\n", line_number);
-		*syntax_errors = 1;
-		return NULL;
-	}
-
-
+	
 	if (word[i] != ']') {
-		fprintf(stderr, "Error in line %d -  invalid mat brackets format\n", line_number);
+		fprintf(stderr, "Error in line %d -  closing brackets expected\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
 	i++;
-	i = skip_spaces(word, i);
 
+	
 	if (word[i] != '[') {
-		fprintf(stderr, "Error in line %d -  invalid mat brackets format\n", line_number);
+		fprintf(stderr, "Error in line %d -  opening  brackets expected\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
 	i++;
-	i = skip_spaces(word, i);
 
 	/*second reg*/
 	if (tolower(word[i]) != 'r') {
-		fprintf(stderr, "Error in line %d -  second mat idx should be reg\n", line_number);
+		fprintf(stderr, "Error in line %d -  expecting register as second matrix range\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
@@ -704,24 +717,21 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	}
 
 	i++;
-	i = skip_spaces(word, i);
 
 	if (word[i] != ']') {
-		fprintf(stderr, "Error in line %d -  invalid mat brackets format\n", line_number);
+		fprintf(stderr, "Error in line %d -  expecting closing brackets\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
 	i++;
 	i = skip_spaces(word, i);
 
-	if (word[i] != '\0') {
+	if (word[i] != '\0' && word[i] != EOF && word[i] != '\n') {
 		fprintf(stderr, "Error in line %d - unexpected characters after matrix usage\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
 	}
-
-	else
-		return my_mat;
+	return my_mat;
 }
 
 
@@ -729,6 +739,7 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 void detect_operand(char operand_position, sentence *parsed, char *temp_word, int line_number, int *syntax_errors, int *operands_in_sentence, int *temp_operand_type)
 {
 	mat *temp_mat;
+	int idx = 0;
 
 	if (temp_word[0] == '#') {
 		*temp_operand_type = 0;
@@ -749,7 +760,11 @@ void detect_operand(char operand_position, sentence *parsed, char *temp_word, in
 			parsed->immediate_operand_b = atoi(temp_word + 1);
 			strcpy(parsed->dest_operand_type, IMMEDIATE_OPERAND_TYPE);
 		}
-	}
+		if ((atoi(temp_word) > 127 || atoi(temp_word) < -128)) {
+			fprintf(stderr, "Error in line %d - the value after an immediate operand must be a number\n", line_number);
+			return;
+		}
+		}
 
 	else if (is_symbol(temp_word, line_number, syntax_errors, FALSE, FALSE)) {
 		*temp_operand_type = 1;
@@ -786,19 +801,22 @@ void detect_operand(char operand_position, sentence *parsed, char *temp_word, in
 		free(temp_mat);
 	}
 
-	else if (temp_word[0] == 'r' && valid_reg_digit(temp_word[1]) == 1)
+	else if (temp_word[0] == 'r' && valid_reg_digit(temp_word[1]))
 	{
-		*temp_operand_type = 3;
-		*operands_in_sentence = *operands_in_sentence + 1;
-		if (operand_position == 'a')
+		if (strlen(temp_word) == 2)
 		{
-			strcpy(parsed->operand_1, temp_word);
-			strcpy(parsed->source_operand_type, REGISTER_OPERAND_TYPE);
-		}
-		else
-		{
-			strcpy(parsed->operand_2, temp_word);
-			strcpy(parsed->dest_operand_type, REGISTER_OPERAND_TYPE);
+			*temp_operand_type = 3;
+			*operands_in_sentence = *operands_in_sentence + 1;
+			if (operand_position == 'a')
+			{
+				strcpy(parsed->operand_1, temp_word);
+				strcpy(parsed->source_operand_type, REGISTER_OPERAND_TYPE);
+			}
+			else
+			{
+				strcpy(parsed->operand_2, temp_word);
+				strcpy(parsed->dest_operand_type, REGISTER_OPERAND_TYPE);
+			}
 		}
 	}
 
@@ -863,7 +881,7 @@ int validate_operand_for_opcode(sentence *parsed, int op_a, int op_b, int qty_of
 				return FALSE;
 			}
 			else if (opcodes_table[i].qty_of_supported_operands > qty_of_ops) {
-				fprintf(stderr, "Error in line %d - too less operands for the opcode %s\n", line_number, parsed->opcode);
+				fprintf(stderr, "Error in line %d - not enough valid operands\n", line_number);
 				*syntax_errors = 1;
 				return FALSE;
 			}
