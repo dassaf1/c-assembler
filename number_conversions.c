@@ -74,6 +74,22 @@ void convert_dec_to_x_bit_binary(int num, int bits, char * result){
     for (; i >= 0; i--) { /* pad with zeros */
         result[i] = '0';
     }
+    /* perform 2's complement if it's a negative number */
+    if (num < 0) {
+        int i = bits - 2;
+        int first_one_encountered = 0;
+        for (; i >= 0; i--) {
+            if (first_one_encountered == 0) {
+                if (result[i] == '1') {
+                    first_one_encountered = 1;
+                    continue;
+                }
+            }
+            else {
+                result[i] = result[i] == '1' ? '0' : '1';
+            }
+        }
+    }
 }
 
 /* Coverts an alphabetic char into its binary value using 10 bits (with zero padding)
