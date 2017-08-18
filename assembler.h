@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "data_structures.h"
 #define CODE_TABLE_START_ADDRESS 100
+#define OPCODES_TABLE_LENGTH 16
 
 int IC;
 int DC;
