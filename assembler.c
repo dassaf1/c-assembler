@@ -131,8 +131,8 @@ int is_existing_opcode(char *current_word)
 
 /* add_string_to_data_table - 
    receives the sentence after it was parsed and converts each char of the string to it's binary representation for it's ascii value.
-   returns the number of memory words added to the data table. */
-int add_string_to_data_table(sentence *curr)
+  */
+void add_string_to_data_table(sentence *curr)
 {
 	int i;
 	char *binary_char;
@@ -149,6 +149,7 @@ int add_string_to_data_table(sentence *curr)
 		}
 		
 		convert_ascii_value_to_10_bit_binary(curr->string[i], new_memory_word->bits);
+		new_memory_word->address = DC;
 		
 	
 		if (data_tail)
@@ -162,11 +163,14 @@ int add_string_to_data_table(sentence *curr)
 			data_tail = data_head;
 			}
 		
-		added_mem_words++; 
+		/*added_mem_words++;*/ 
+		DC++;
 	}
 		/* adding '\0' to data table at the end of the string */
 		new_memory_word = (memory_word*)malloc(sizeof(memory_word));
 		strcpy(new_memory_word->bits, "0000000000");
+		new_memory_word->address = DC;
+		DC++;
 		
 		added_mem_words++; 
 		data_tail->next = new_memory_word;
@@ -174,14 +178,14 @@ int add_string_to_data_table(sentence *curr)
 
 		data_tail->next = NULL;
 	
-		return added_mem_words;
+		return; /*added_mem_words;*/
 }
 
 
 /* add_num_to_data_table - 
    receives the sentence after it was parsed and converts each number of the data_arr of the sentence into it's binary value.
    returns the number of memory words added to the data table. */
-int add_num_to_data_table(sentence *curr)
+void add_num_to_data_table(sentence *curr)
 {	
 	int i;
 	char converted_to_bits[11];
@@ -197,8 +201,10 @@ int add_num_to_data_table(sentence *curr)
 			exit(1);
 		}
 	
-	convert_dec_to_x_bit_binary(curr->data_arr[i],10,converted_to_bits);
+	convert_dec_to_x_bit_binary(curr->data_arr[i],11,converted_to_bits);
     strcpy(new_memory_word->bits,converted_to_bits);
+	new_memory_word->address = DC;
+
 	if (data_tail) 
 	{
 		data_tail->next = new_memory_word;
@@ -209,12 +215,13 @@ int add_num_to_data_table(sentence *curr)
 		data_tail = data_head;
 		}
 		
-		added_mem_words++; 	 
+	DC++;
+
 	}
 
 	data_tail->next = NULL;
 		
-	return added_mem_words;
+	return; /*added_mem_words;*/
 }
 
 
@@ -222,12 +229,13 @@ int add_num_to_data_table(sentence *curr)
    receives the sentence after it was parsed and converts each number of the data_arr of the sentence into it's binary value.
    returns the number of memory words added to the data table. */
 
-int add_matrix_to_data_table(sentence *curr)
+void add_matrix_to_data_table(sentence *curr)
 {
 	int i;
 	memory_word* new_memory_word;
 	int added_mem_words = 0;
 	
+
 	for(i=0; i < (curr->mat_num_of_rows)*(curr->mat_num_of_cols); i++) {
 	
 	new_memory_word = (memory_word*)malloc(sizeof(memory_word));
@@ -237,7 +245,9 @@ int add_matrix_to_data_table(sentence *curr)
 			exit(1);
 		}
 	
-	convert_dec_to_x_bit_binary(curr->mat[i],10,new_memory_word->bits);
+	convert_dec_to_x_bit_binary(curr->mat[i],11,new_memory_word->bits);
+	new_memory_word->address = DC;
+
 	if (data_tail)
 	{
 		data_tail->next = new_memory_word;
@@ -246,14 +256,14 @@ int add_matrix_to_data_table(sentence *curr)
 	else {
 		data_head = new_memory_word;
 		data_tail = data_head;
-		}
+	}
 		
-		added_mem_words++; 	 
+	DC++;
 	}
 
 	data_tail->next = NULL;
 		
-	return added_mem_words;
+	return; /*added_mem_words;*/
 }
 
 
@@ -267,19 +277,23 @@ void add_to_data_table(sentence* curr)
 	switch(curr->guidance_command)
 	{
 		case(STRING):
-			num_of_entries = add_string_to_data_table(curr);
+			/* num_of_entries */
+			add_string_to_data_table(curr);
 			break;
 		case(NUM):
-			num_of_entries = add_num_to_data_table(curr);
+			/* num_of_entries */
+			add_num_to_data_table(curr);
 			break;
 		case(MAT):
-			num_of_entries = add_matrix_to_data_table(curr);
+			/* num_of_entries */ 
+			add_matrix_to_data_table(curr);
 			break;
 		default:
 			return;
 	}
-
+	/*
 	DC+=num_of_entries;
+	*/
 	return;
 		
 }
