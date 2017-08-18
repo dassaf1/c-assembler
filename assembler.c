@@ -7,7 +7,7 @@
 #include "line_parser.h"
 #include "assembler.h"
 
-#define OPCODES_TABLE_LENGTH size_opcode_table
+
 #define LINE_LENGTH 81
 
 char line[LINE_LENGTH]; 
