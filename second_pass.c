@@ -149,7 +149,7 @@ void encode_register(char * register_names[], char * operand_type) {
         is_error_found = 1;
         return;
     }
-    for(i = 0; i < OPCODES_TABLE_LENGTH; i++) {
+    for(i = 0; i < registers_table_length; i++) {
         if (strcmp(registers_table[i].register_name, register_names[0]) == 0) {
             strcpy(register1_val, registers_table[i].register_val);
         }
@@ -373,8 +373,8 @@ void execute_second_pass(char * filename) {
                 }
                 else { /* is register delivery method */
                     char * register_names[2];
-                    register_names[0] = current_sentence->operand_2;
-                    encode_register(register_names, "source");
+                    register_names[1] = current_sentence->operand_2;
+                    encode_register(register_names, "destination");
                 }
             }
 		}
