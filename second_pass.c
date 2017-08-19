@@ -29,12 +29,9 @@ char object_filename[MAX_FILE_NAME_SIZE];
 char extern_filename[MAX_FILE_NAME_SIZE];
 char intern_filename[MAX_FILE_NAME_SIZE];
 
-int ic_second_pass = CODE_TABLE_START_ADDRESS;
-int is_error_found = 0;
-int line_number = 1;
-
-memory_word * code_head = NULL;
-memory_word * code_tail = NULL;
+int ic_second_pass;
+int is_error_found;
+int line_number;
 
 void encode_instruction(sentence * curr);
 void encode_immediate_operand(int oper);
@@ -67,6 +64,7 @@ void add_item_to_code_list(memory_word * item) { /* Code list is a linked list o
 
 memory_word * create_new_memory_word() {
     memory_word * new_memory_word = (memory_word*)malloc(sizeof(memory_word));
+    new_memory_word->next = NULL;
     if (!new_memory_word) {
 		fprintf(stderr, "ERROR: Memory allocation failed");
 		is_error_found = 1;
@@ -290,6 +288,10 @@ int open_second_pass_output_files() {
     object_fd = fopen(object_filename, "w");
     extern_fd = fopen(extern_filename, "w");
     intern_fd = fopen(intern_filename, "w");
+    if (!(object_fd && extern_fd && intern_fd)) {
+        fprintf(stderr, "ERROR: Could not open for write one or more of the assembler output files\n");
+        return 0;
+    }
     return 1;
 }
 
@@ -301,32 +303,14 @@ void close_second_pass_output_files() {
 }
 
 void execute_second_pass(char * filename) {
-
-    sentence * current_sentence = sentence_head;   /* ENABLE THIS AFTER DELETION OF FOR TEST BLOCK!! */
-
-    /* FOR TEST */
-/*    sentence * sent1 = (sentence *)malloc(sizeof(sentence));
-    sentence * sent2 = (sentence *)malloc(sizeof(sentence));
-    sentence * sentence_head = sent1;
     sentence * current_sentence = sentence_head;
-    sent1->is_action = 1;
-    strcpy(sent1->opcode, "stop");
-    strcpy(sent1->symbol, "W");
-    sent1->num_of_operands = 2;
-    strcpy(sent1->source_operand_type, "10");
-    strcpy(sent1->dest_operand_type, "10");
-    strcpy(sent1->operand_1, "W");
-    strcpy(sent1->operand_2, "W");
-    strcpy(sent1->matrix_row_operand_a, "r1");
-    strcpy(sent1->matrix_col_operand_a, "r2");
-    strcpy(sent1->matrix_row_operand_b, "r1");
-    strcpy(sent1->matrix_col_operand_b, "r2");
-    sent1->guidance_command = ENTRY;
-    sent1->immediate_operand_a = 5;
-    sent1->immediate_operand_b = 7;
-    sent1->next = sent2;
 
-     END FOR TEST */
+    ic_second_pass = CODE_TABLE_START_ADDRESS;
+    is_error_found = 0;
+    line_number = 1;
+
+    code_head = NULL;
+    code_tail = NULL;
 
     strcpy(input_filename, filename);
     combine_filename_with_new_file_extension(input_filename, object_filename, OBJECT_FILE_EXTENSION);
@@ -401,85 +385,13 @@ void execute_second_pass(char * filename) {
     if (is_error_found) {
         fprintf(stderr, "ERROR: Errors found in second pass. Output files will not be created.\n");
         close_second_pass_output_files();
+        free_data(data_head);
+        free_second_pass_data_structs_linked_lists();
         return;
     }
 
     append_data_table_into_end_of_code_table(data_head);
-
     create_object_file();
     close_second_pass_output_files();
-}
-
-int main() {
-/*  TESTING BLOCK **********************************
- *
- *  char * regs[3] = {"r1", "r6"};
-
-    sentence * curr = (sentence *)malloc(sizeof(sentence));
-    symbol_line * sl1 = (symbol_line*)malloc(sizeof(symbol_line));
-    symbol_line * sl2 = (symbol_line*)malloc(sizeof(symbol_line));
-    symbol_line * sl3 = (symbol_line*)malloc(sizeof(symbol_line));
-
-    memory_word * mw1 = (memory_word*)malloc(sizeof(memory_word));
-    memory_word * mw2 = (memory_word*)malloc(sizeof(memory_word));
-
-    symbol_head = sl1;
-    sl1->next = sl2;
-    sl2->next = sl3;
-
-    data_head = mw1;
-    mw1->next = mw2;
-    mw1->address = 0;
-    strcpy(mw1->bits, "0000000001");
-    mw2->address = 1;
-    strcpy(mw2->bits, "0000000002");
-
-    strcpy(sl2->symbol, "W");
-    sl2->address = 8;
-
-    strcpy(curr->opcode, "stop");
-    strcpy(curr->source_operand_type, DIRECT_DELIVERY_METHOD);
-    strcpy(curr->dest_operand_type, MATRIX_DELIVERY_METHOD);
-    encode_instruction(curr);
-    encode_immediate_operand(30);
-    encode_direct_operand("W");
-    encode_register(regs, "destination");
-    encode_matrix("W", "r1", "r2");
-    encode_extern_operand();
-
-    print_memory_word_list(code_head);
-    printf("\nic_second_pass: %d\n\n", ic_second_pass);
-
-    append_data_table_into_end_of_code_table(data_head);
-    print_memory_word_list(data_head);
-    printf("\nic_second_pass after data append: %d\n\n", ic_second_pass);
-
-    END OF TESTING BLOCK *********************************
-    */
-
-    /*  TESTING BLOCK ********************************** */
-
-    /*symbol_line * sl1 = (symbol_line*)malloc(sizeof(symbol_line));
-    symbol_line * sl2 = (symbol_line*)malloc(sizeof(symbol_line));
-    symbol_line * sl3 = (symbol_line*)malloc(sizeof(symbol_line));
-
-    symbol_head = sl1;
-    sl1->next = sl2;
-    sl2->next = sl3;
-
-    strcpy(sl2->symbol, "W");
-    sl2->address = 8;
-    sl2->is_extern = 1;*/
-
-    char filename[] = "file.as";
-    FILE * fd = fopen(filename, "r");
-
-    execute_first_pass(fd);
-    execute_second_pass(filename);
-
-    print_memory_word_list(code_head);
-
-    return 0;
-
-    /* END OF TESTING BLOCK ********************************* */
+    free_second_pass_data_structs_linked_lists();
 }
