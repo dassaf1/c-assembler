@@ -25,6 +25,8 @@ memory_word *data_head = NULL;
 sentence *sentence_head = NULL;
 sentence *sentence_tail = NULL;
 
+
+
 /* symbol_exists - 
  receives: the head of the symbols table, the current symbol. The function searches within the list if the symbol already exists.
  returns: 1 if already exists, 0 if not. */
@@ -122,7 +124,7 @@ int is_existing_opcode(char *current_word)
 	int i;
 	for (i = 0; i < OPCODES_TABLE_LENGTH; i++)
 	{
-		if (strcmp(opcodes_table[0].opcode,current_word) == 0)
+		if (strcmp_lower(current_word,opcodes_table[0].opcode) == 0)
 			return TRUE;
 	}
 	
@@ -431,7 +433,7 @@ int execute_first_pass(FILE *fd)
 					add_to_symbol_table(current_sentence->symbol, DC, 0, DATA);
 				}
 				else
-					fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
+					fprintf(stderr, "Error in line %d - symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
 			}
 			/* adding into data table. DC is increased: */
 			add_to_data_table(current_sentence);
@@ -450,7 +452,7 @@ int execute_first_pass(FILE *fd)
 					}
 					else
 					{
-						fprintf(stderr, "Error in line %d: symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
+						fprintf(stderr, "Error in line %d - symbol %s already exists in symbols table\n", line_number, current_sentence->symbol);
 						syntax_errors = TRUE;
 					}
 				}
