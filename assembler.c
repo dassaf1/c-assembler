@@ -137,7 +137,6 @@ int is_existing_opcode(char *current_word)
 void add_string_to_data_table(sentence *curr)
 {
 	int i;
-	char *binary_char;
 	memory_word* new_memory_word; 
 	int added_mem_words = 0;
 
@@ -192,7 +191,6 @@ void add_num_to_data_table(sentence *curr)
 	int i;
 	char converted_to_bits[11];
 	memory_word* new_memory_word;
-	int added_mem_words = 0;
 	
 	for(i=0; i < curr->data_arr_num_of_params ; i++) {
 	
@@ -235,7 +233,6 @@ void add_matrix_to_data_table(sentence *curr)
 {
 	int i;
 	memory_word* new_memory_word;
-	int added_mem_words = 0;
 	
 
 	for(i=0; i < (curr->mat_num_of_rows)*(curr->mat_num_of_cols); i++) {
@@ -274,7 +271,6 @@ void add_matrix_to_data_table(sentence *curr)
    Adds to DC the number of entries commited */
 void add_to_data_table(sentence* curr)
 {
-	int num_of_entries = 0; 
 	
 	switch(curr->guidance_command)
 	{
