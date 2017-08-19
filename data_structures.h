@@ -26,7 +26,7 @@ enum guidance {EXTERN, ENTRY, NUM, STRING, MAT};
 /* struct for holding an opcode and it's binary value */
 typedef struct opcodes {
 	char* opcode;
-	char binary_val[4];
+	char binary_val[5];
 	int qty_of_supported_operands;
 	int source_operand_types[5];
 	int destination_operand_types[5];
