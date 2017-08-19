@@ -95,6 +95,7 @@ extern opcodes opcodes_table[];
 extern mem_words_per_operand_type operands_vs_num_of_words_to_use[];
 extern registers registers_table[];
 extern char *saved_languages_words[NUM_OF_SAVED_WORDS];
+int registers_table_length;
  
 #endif
 
