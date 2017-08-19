@@ -755,7 +755,7 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	my_mat->reg_row[0] = 'r';
 	i++;
 
-	if (valid_reg_digit(word[i])) {
+	if (valid_reg_digit(word[i]) && word[i+1]==']') {
 		my_mat->reg_row[1] = word[i];
 		my_mat->reg_row[2] = '\0';
 	}
@@ -792,7 +792,7 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	my_mat->reg_col[0] = 'r';
 	i++;
 
-	if (valid_reg_digit(word[i])) {
+	if (valid_reg_digit(word[i]) && word[i+1]==']') {
 		my_mat->reg_col[1] = word[i];
 		my_mat->reg_col[2] = '\0';
 	}
