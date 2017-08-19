@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "data_structures.h"
-
+#include "number_conversions.h"
 
 #define MAX_DIGITS_SIZE 5
 
@@ -54,8 +54,7 @@ int get_next_word(char *current_word, char *line, int last_position)
 	while(line[position] != ' ' && line[position] != ',' && line[position] != '[' && line[position] != ']' && line[position] != '\n' && line[position] != EOF && line[position] != '\0' 
 		&& line[position] != '\t')
 		{
-			/*current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
-			current_word[i] = line[position]; /*in order to unify all comparisons */
+			current_word[i] = line[position];
 			i++;
 			position++;
 		}
@@ -286,7 +285,6 @@ receives: a pointer to the temp member, the line to parse, line number, last pos
 returns the new position and edits the temp_member array with the current number found.*/
 int get_next_member(char *temp_member, char *line, int line_number, int last_position, int *syntax_errors, int *expecting_comma)
 {
-	int is_negative = 0;
 	int i = 0;
 	int new_position = skip_spaces(line, last_position);
 	int number_ended = 0; /*indication that no more digits are expected (for 3,4 4,5 example)*/
@@ -396,7 +394,7 @@ void verify_and_save_numbers(sentence *parsed, char * line, int last_position, i
 }
 
 
-void mat_range_is_valid(int range, int max_possible, int *line_number, int *syntax_errors) {
+void mat_range_is_valid(int range, int max_possible, int line_number, int *syntax_errors) {
 
 	if (range < 0 || range > max_possible) {
 		fprintf(stderr, "Error in line %d - data can\'t end with a comma\n", line_number);
@@ -658,8 +656,7 @@ int get_next_operand(char *current_word, char *line, int last_position)
 
 	while (line[position] != ',' && line[position] != '\n' && line[position] != ' ' && line[position] != EOF && line[position] != '\0' && line[position] != '\t')
 	{
-		/*current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
-		current_word[i] = line[position]; /*in order to unify all comparisons */
+		current_word[i] = line[position];
 		i++;
 		position++;
 	}
@@ -829,7 +826,6 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 void detect_operand(char operand_position, sentence *parsed, char *temp_word, int line_number, int *syntax_errors, int *operands_in_sentence, int *temp_operand_type)
 {
 	mat *temp_mat;
-	int idx = 0;
 
 	if (temp_word[0] == '#') {
 		*temp_operand_type = 0;
