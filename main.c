@@ -47,7 +47,7 @@ int main(int argc, char * argv[]) {
             printf("-----------------------------------------------------------------\n");
         }
         else {
-            fprintf(stderr, "ERROR: Errors found in first pass. Second pass will not be run.");
+            fprintf(stderr, "ERROR: Errors found in first pass. Second pass will not be run.\n");
         }
         fclose(fd);
     }

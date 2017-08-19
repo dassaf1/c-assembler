@@ -9,13 +9,8 @@
 #define ABSOLUTE_ARE "00"
 #define EXTERNAL_ARE "01"
 #define RELOCATABLE_ARE "10"
-#define IMMEDIATE_DELIVERY_METHOD "00" /* should to be GLOBAL */
-#define DIRECT_DELIVERY_METHOD "01" /* should to be GLOBAL */
-#define MATRIX_DELIVERY_METHOD "10" /* should to be GLOBAL */
-#define REGISTER_DELIVERY_METHOD "11" /* should to be GLOBAL */
-#define MAX_FILE_NAME_SIZE 100 /* should to be GLOBAL */
+#define MAX_FILE_NAME_SIZE 100
 #define BASE_4_STRAGE_NUMBER_MAX_DIGITS 10
-#define INPUT_FILE_MAX_LINE_SIZE 81 /* should to be GLOBAL */
 #define OBJECT_FILE_EXTENSION ".ob"
 #define EXTERN_FILE_EXTENSION ".ext"
 #define ENTRY_FILE_EXTENSION ".ent"
@@ -332,15 +327,15 @@ void execute_second_pass(char * filename) {
 		    encode_instruction(current_sentence);
             if (current_sentence->num_of_operands == 2) { /* instruction sentence with 2 operands */
                 /* encode source operand */
-                if (strcmp(current_sentence->source_operand_type, IMMEDIATE_DELIVERY_METHOD) == 0) {
+                if (strcmp(current_sentence->source_operand_type, IMMEDIATE_OPERAND_TYPE) == 0) {
                     encode_immediate_operand(current_sentence->immediate_operand_a);
                 }
-                else if (strcmp(current_sentence->source_operand_type, DIRECT_DELIVERY_METHOD) == 0) {
+                else if (strcmp(current_sentence->source_operand_type, DIRECT_OPERAND_TYPE) == 0) {
                     if (! (handle_direct_and_matrix_operands(current_sentence->operand_1))) {
                         break;
                     }
                 }
-                else if (strcmp(current_sentence->source_operand_type, MATRIX_DELIVERY_METHOD) == 0) {
+                else if (strcmp(current_sentence->source_operand_type, MATRIX_OPERAND_TYPE) == 0) {
                     if (!(encode_matrix(current_sentence->operand_1, current_sentence->matrix_row_operand_a, current_sentence->matrix_col_operand_a))) {
                         break;
                     }
@@ -354,15 +349,15 @@ void execute_second_pass(char * filename) {
             }
             if (current_sentence->num_of_operands == 1 || current_sentence->num_of_operands == 2) { /* instruction sentence with 1 operand */
             /* encode destination operand */
-                if (strcmp(current_sentence->dest_operand_type, IMMEDIATE_DELIVERY_METHOD) == 0) {
+                if (strcmp(current_sentence->dest_operand_type, IMMEDIATE_OPERAND_TYPE) == 0) {
                     encode_immediate_operand(current_sentence->immediate_operand_b);
                 }
-                else if (strcmp(current_sentence->dest_operand_type, DIRECT_DELIVERY_METHOD) == 0) {
+                else if (strcmp(current_sentence->dest_operand_type, DIRECT_OPERAND_TYPE) == 0) {
                     if (! (handle_direct_and_matrix_operands(current_sentence->operand_2))) {
                         break;
                     }
                 }
-                else if (strcmp(current_sentence->dest_operand_type, MATRIX_DELIVERY_METHOD) == 0) {
+                else if (strcmp(current_sentence->dest_operand_type, MATRIX_OPERAND_TYPE) == 0) {
                     if (!(encode_matrix(current_sentence->operand_2, current_sentence->matrix_row_operand_b, current_sentence->matrix_col_operand_b))) {
                         break;
                     }

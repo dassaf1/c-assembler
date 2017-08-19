@@ -438,7 +438,7 @@ void verify_and_save_matrix(sentence *parsed, char * line, int last_position, in
 		}
 
 		else if (expecting_number) {
-			if (isdigit(line[new_position])) { /* TODO: add verification for MAX_DIGITS_SIZE */
+			if (isdigit(line[new_position])) {
 				temp_member[i] = line[new_position];
 				i++;
 			}
@@ -1016,7 +1016,7 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 	char temp_word[MAX_SYMBOL_SIZE];
 
 	int new_position = skip_spaces(line, last_position);
-	new_position = get_next_operand(temp_word, line, new_position); /* TODO: get_next_operand - stops at ',' \n or EOF: doesn't stop in ' ' */
+	new_position = get_next_operand(temp_word, line, new_position);
 	if (strcmp(temp_word, ",") == 0) {
 		fprintf(stderr, "Error in line %d - unexpected comma\n", line_number);
 		*syntax_errors = TRUE;
@@ -1167,7 +1167,6 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_errors) {
 	int last_position;
 	char current_word[80];
 	int opc;
-	/*TODO: add case sensitive flag for get_next_word - the flag should set when .string command is detected. */
 
 	sentence *parsed = (sentence*)malloc(sizeof(sentence));
 
