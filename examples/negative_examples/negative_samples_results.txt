@@ -1,0 +1,18 @@
+Error in line 1 - the address type of the destination operand doesn't match to the opcode add
+Error in line 2 - too many operands for the opcode stop
+Error in line 3 - '"' expected at the end of the string
+Error in line 4 - not enough valid operands
+Error in line 5 - valid number expected
+Error in line 7 - unexpected comma
+Error in line 8 - invalid reg num
+Error in line 8 - not enough valid operands
+Error in line 9 - operand cannot start with a non alphabetic character
+Error in line 10 - the value after an immediate operand must be a number
+Error in line 11 - missing symbol after guidance command
+Error in line 12 - missing symbol after guidance command
+Error in line 13 - redundant ','.
+Error in line 14 - redundant ','.
+Error in line 15 - the range of numbers that can be translated with assembler that works with 10 bits is from -512 to 511. Number -555 cannot be stored.
+Error in line 16 - '"' expected at the beginning of the string
+ERROR: Errors found in first pass. Second pass will not be run.
+INFO: Running assembler on file examples/negative_examples/negative_examples.as
