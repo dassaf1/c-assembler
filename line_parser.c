@@ -7,6 +7,23 @@
 
 #define MAX_DIGITS_SIZE 5
 
+/* strcmp_lower -
+receives: 2 strings for non-case-sensitive strcmp.
+returns: strcmp result on tolower(word1), word2.
+*/
+int strcmp_lower(char *word1, char *word2)
+{
+	int i = 0;
+	char word1_lower[MAX_STRING_SIZE];
+	while (word1[i] != '\0') {
+		word1_lower[i] = tolower(word1[i]);
+		i++;
+	}
+	word1_lower[i] = '\0';
+	return strcmp(word1_lower,word2);
+}
+
+
 /* is_current_word_empty - 
  receives: the current word obtained from list. 
  returns: 1 if the word is empty, 0 if not.
@@ -37,7 +54,8 @@ int get_next_word(char *current_word, char *line, int last_position)
 	while(line[position] != ' ' && line[position] != ',' && line[position] != '[' && line[position] != ']' && line[position] != '\n' && line[position] != EOF && line[position] != '\0' 
 		&& line[position] != '\t')
 		{
-			current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
+			/*current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
+			current_word[i] = line[position]; /*in order to unify all comparisons */
 			i++;
 			position++;
 		}
@@ -59,7 +77,7 @@ int is_saved_word(char *current_word, int line_number, int *syntax_errors, int p
 
 	for(i = 0; i < NUM_OF_SAVED_WORDS; i++) 
 	{	
-		if (strcmp(current_word,saved_languages_words[i])==0) {
+		if (strcmp_lower(current_word,saved_languages_words[i])==0) {
 			if (print_err) /*print error will also set syntax errors flag if a the symbol is forbidden to be a saved word*/
 			{
 				printf("Error in line %d - the word %s is a saved word in the language\n", line_number, current_word);
@@ -91,8 +109,8 @@ int is_alphanumeric(char *str) {
 */
 int is_command(char *curr_word)
 {
-	if (strcmp(curr_word, ".data") == 0 || strcmp(curr_word, ".mat") == 0 || strcmp(curr_word, ".string") == 0
-		|| strcmp(curr_word, ".entry") == 0 || strcmp(curr_word, ".extern") == 0)
+	if (strcmp_lower(curr_word, ".data") == 0 || strcmp_lower(curr_word, ".mat") == 0 || strcmp_lower(curr_word, ".string") == 0
+		|| strcmp_lower(curr_word, ".entry") == 0 || strcmp_lower(curr_word, ".extern") == 0)
 		return TRUE;
 	else
 		return FALSE;
@@ -106,16 +124,33 @@ int is_symbol(char *current_word, int line_number, int *syntax_errors, int begin
 	int length = strlen(current_word);
 	
 	if(!isalpha(current_word[0]) && !is_command(current_word)) {
-		fprintf(stderr, "Error in line %d - symbol cannot start with a non alphabetic character\n", line_number);
+		if (current_word[0] == '.')
+		{
+			fprintf(stderr, "Error in line %d - unknown command\n", line_number);
+		}
+		else
+		{
+			fprintf(stderr, "Error in line %d - symbol cannot start with a non alphabetic character\n", line_number);
+		}
 		*syntax_errors = TRUE;
 		return FALSE;
 	  }
 
-	else if(begining_of_sentence) {
-
-		if (current_word[length-1] == ':' && length <=30) {
+	else if (begining_of_sentence) {
+		if (length > 30)
+		{
+			fprintf(stderr, "Error in line %d - The word is too long to be a symbol\n", line_number);
+			return FALSE;
+		}
+		if (current_word[length-1] == ':') {
 			current_word[length-1] = '\0';
-			return !is_saved_word(current_word, line_number, syntax_errors, print_err);
+			if (is_saved_word(current_word, line_number, syntax_errors, print_err))
+			{
+				current_word[length - 1] = ':';
+				return FALSE;
+			}
+			else
+				return TRUE;			
 		}
 
 		else
@@ -138,6 +173,46 @@ int is_symbol(char *current_word, int line_number, int *syntax_errors, int begin
 		return FALSE;
 }
 
+/* is_symbol_operand - operand which is not #<NUM> must start with an alphabetic char (either symbol, or mat name or r<NUM>)
+ONLY ERROR PRINT IS CHANGED IN THIS FUNC
+receives: the current word to parse,
+returns: 1 if it's a symbol, 0 if not. */
+int is_symbol_operand(char *current_word, int line_number, int *syntax_errors, int begining_of_sentence, int print_err)
+{
+	int length = strlen(current_word);
+
+	if (!isalpha(current_word[0]) && !is_command(current_word)) {
+		fprintf(stderr, "Error in line %d - operand cannot start with a non alphabetic character\n", line_number);
+		*syntax_errors = TRUE;
+		return FALSE;
+	}
+
+	else if (begining_of_sentence) {
+
+		if (current_word[length - 1] == ':' && length <= 30) {
+			current_word[length - 1] = '\0';
+			return !is_saved_word(current_word, line_number, syntax_errors, print_err);
+		}
+
+		else
+		{
+			if (!is_saved_word(current_word, line_number, syntax_errors, 0)) {
+				fprintf(stderr, "Error in line %d - the symbol is missing ':'\n", line_number);
+				*syntax_errors = 1;
+			}
+			return FALSE;
+
+		}
+
+
+	}
+
+	else if (length <= 30 && is_alphanumeric(current_word))
+		return !is_saved_word(current_word, line_number, syntax_errors, print_err);
+
+	else
+		return FALSE;
+}
 
 /* is_store_command -
  receives: the current word to parse,
@@ -145,7 +220,7 @@ int is_symbol(char *current_word, int line_number, int *syntax_errors, int begin
 int is_store_command(char *current_word)
 {
 	
-	if (strcmp(current_word, ".data") == 0 || strcmp(current_word, ".mat") == 0 || strcmp(current_word, ".string") == 0)
+	if (strcmp_lower(current_word, ".data") == 0 || strcmp_lower(current_word, ".mat") == 0 || strcmp_lower(current_word, ".string") == 0)
 	{
 		strncpy(current_word, current_word + 1, strlen(current_word) - 1); /* removes the "." from sentence. */
 		current_word[strlen(current_word) - 1] = '\0'; /* in order to strcmp to be accurate */
@@ -161,11 +236,11 @@ int is_store_command(char *current_word)
   sentence struct. */
 void detect_store_command(sentence *parsed, char *current_word)
 {
-	if (strcmp(current_word, "data") == 0)
+	if (strcmp_lower(current_word, "data") == 0)
 		parsed->guidance_command = NUM;
-	else if (strcmp(current_word, "mat") == 0)
+	else if (strcmp_lower(current_word, "mat") == 0)
 		parsed->guidance_command = MAT;
-	else if (strcmp(current_word, "string") == 0)
+	else if (strcmp_lower(current_word, "string") == 0)
 		parsed->guidance_command = STRING; 
 	return;
 }
@@ -176,7 +251,7 @@ void detect_store_command(sentence *parsed, char *current_word)
 int is_extern_or_entry_command(char *current_word)
 {   
 	   
-	if (strcmp(current_word, ".extern") == 0 || strcmp(current_word, ".entry") == 0)
+	if (strcmp_lower(current_word, ".extern") == 0 || strcmp_lower(current_word, ".entry") == 0)
 	{
 		strncpy(current_word, current_word + 1, strlen(current_word) - 1); /* removes '.' from the beginning */
 		current_word[strlen(current_word) - 1] = '\0'; /* in order to strcmp to be accurate */
@@ -193,7 +268,7 @@ int is_extern_or_entry_command(char *current_word)
 */
 int is_extern(char *current_word)
 {
-	return (strcmp(current_word, "extern") == 0 ? TRUE : FALSE);
+	return (strcmp_lower(current_word, "extern") == 0 ? TRUE : FALSE);
 
 }
 
@@ -228,7 +303,7 @@ int get_next_member(char *temp_member, char *line, int line_number, int last_pos
 			}
 			else
 			{
-				fprintf(stderr, "Error in line %d - number expected\n", line_number);
+				fprintf(stderr, "Error in line %d - valid number expected\n", line_number);
 				*syntax_errors = 1;
 			}
 		}
@@ -239,8 +314,9 @@ int get_next_member(char *temp_member, char *line, int line_number, int last_pos
 			i++;
 		}
 		else if (isdigit(line[new_position]) && number_ended == 1) {
-			fprintf(stderr, "Error in line %d - expecting comma after space\n", line_number);
+			fprintf(stderr, "Error in line %d - expecting comma\n", line_number);
 			*syntax_errors = 1;
+			return new_position;
 		}
 
 		else if (line[new_position] == ',') {
@@ -262,7 +338,7 @@ int get_next_member(char *temp_member, char *line, int line_number, int last_pos
 		}
 		else
 		{
-			fprintf(stderr, "Error in line %d - only numbers can come after this store command\n", line_number);
+			fprintf(stderr, "Error in line %d - only integers can come after .data / .mat store command\n", line_number);
 			*syntax_errors = 1;
 		}
 
@@ -307,10 +383,11 @@ void verify_and_save_numbers(sentence *parsed, char * line, int last_position, i
 		j++;
 	}
 
-	/*if expecting_comma==0 it means that last time we saw a comma and line ended*/
+	/*if expecting_comma == 0 it means that the last member encountered was a comma, or when we don't have any numbers. 
+	We reach to this "if" when the line ends and the data isn't completed */
 	if (expecting_comma == 0)
 	{
-		fprintf(stderr, "Error in line %d - data can\'t end with a comma\n", line_number);
+		fprintf(stderr, "Error in line %d - missing data parameters\n", line_number);
 		*syntax_errors = 1;
 	}
 
@@ -546,7 +623,7 @@ int detect_opcode(char *current_word) {
 	int opcode_idx = 0;
 
 	while (opcode_idx < NUM_OF_OPCODES) {
-		if (strcmp(current_word, opcodes_table[opcode_idx].opcode) == 0)
+		if (strcmp_lower(current_word, opcodes_table[opcode_idx].opcode) == 0)
 			return TRUE;
 
 		opcode_idx++;
@@ -565,6 +642,14 @@ int get_next_operand(char *current_word, char *line, int last_position)
 	int position = last_position;
 	int i = 0;
 
+	if (line[position] == ',')
+	{
+		current_word[0] = ',';
+		current_word[1] = '\0';
+		return position;
+	}
+
+
 	if (line[position] == '\n' || line[position] == EOF || line[position] == '\0')
 	{
 		current_word[i] = '\0';
@@ -573,7 +658,8 @@ int get_next_operand(char *current_word, char *line, int last_position)
 
 	while (line[position] != ',' && line[position] != '\n' && line[position] != ' ' && line[position] != EOF && line[position] != '\0' && line[position] != '\t')
 	{
-		current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
+		/*current_word[i] = tolower(line[position]); /*in order to unify all comparisons */
+		current_word[i] = line[position]; /*in order to unify all comparisons */
 		i++;
 		position++;
 	}
@@ -643,7 +729,7 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	}
 	
 	/*open brackets*/
-	if (tolower(word[i]) != '[') {
+	if (word[i] != '[') {
 		/*fprintf(stderr, "Error in line %d -  expected open brackets\n", line_number);
 		*syntax_errors = 1;*/
 		return NULL;
@@ -700,7 +786,7 @@ mat* get_matrix(char *word, int line_number, int *syntax_errors) {
 	i++;
 
 	/*second reg*/
-	if (tolower(word[i]) != 'r') {
+	if (word[i] != 'r') {
 		fprintf(stderr, "Error in line %d -  expecting register as second matrix range\n", line_number);
 		*syntax_errors = 1;
 		return NULL;
@@ -771,7 +857,7 @@ void detect_operand(char operand_position, sentence *parsed, char *temp_word, in
 		}
 		}
 
-	else if (is_symbol(temp_word, line_number, syntax_errors, FALSE, FALSE)) {
+	else if (is_symbol_operand(temp_word, line_number, syntax_errors, FALSE, FALSE)) {
 		*temp_operand_type = 1;
 		*operands_in_sentence = *operands_in_sentence + 1;
 		if (operand_position == 'a') {
@@ -879,7 +965,7 @@ int validate_operand_for_opcode(sentence *parsed, int op_a, int op_b, int qty_of
 
 	for (i = 0; i < NUM_OF_OPCODES; i++)
 	{
-		if (strcmp(parsed->opcode, opcodes_table[i].opcode) == 0) {
+		if (strcmp_lower(parsed->opcode, opcodes_table[i].opcode) == 0) {
 			if (opcodes_table[i].qty_of_supported_operands < qty_of_ops) {
 				fprintf(stderr, "Error in line %d - too many operands for the opcode %s\n", line_number, parsed->opcode);
 				*syntax_errors = 1;
@@ -891,7 +977,7 @@ int validate_operand_for_opcode(sentence *parsed, int op_a, int op_b, int qty_of
 				return FALSE;
 			}
 
-			if (qty_of_ops == 1)
+			if (qty_of_ops == 1) /* if there is a single operand, it is categorized as destination operand */
 			{
 				if (check_destination_address_type(i, op_a) == FALSE) {
 					fprintf(stderr, "Error in line %d - the address type of the destination operand doesn't match to the opcode %s\n", line_number, parsed->opcode);
@@ -935,9 +1021,14 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 
 	int new_position = skip_spaces(line, last_position);
 	new_position = get_next_operand(temp_word, line, new_position); /* TODO: get_next_operand - stops at ',' \n or EOF: doesn't stop in ' ' */
+	if (strcmp(temp_word, ",") == 0) {
+		fprintf(stderr, "Error in line %d - unexpected comma\n", line_number);
+		*syntax_errors = TRUE;
+		return;
+	}
 
 	if (is_current_word_empty(temp_word)) {
-/*		fprintf(stderr, "Error in line %d - missing operand after comma\n", line_number);*/
+		validate_operand_for_opcode(parsed, -999, -999, operands_in_sentence, line_number, syntax_errors);
 		return;
 	}
 
@@ -950,6 +1041,11 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 	new_position = skip_spaces(line, new_position);
 	if (line[new_position] == ',') {
 		new_position = get_next_operand(temp_word, line, new_position+1);
+		if (strcmp(temp_word, ",") == 0) {
+			fprintf(stderr, "Error in line %d - unexpected comma\n", line_number);
+			*syntax_errors = TRUE;
+			return;
+		}
 
 		if (is_current_word_empty(temp_word)) {
 			fprintf(stderr, "Error in line %d - missing operand after comma\n", line_number);
@@ -962,7 +1058,7 @@ void verify_operands(sentence *parsed, char *line, int last_position, int line_n
 	
 	if (line[new_position] != '\n' && line[new_position] != EOF && line[new_position] != '\0')
 	{
-		fprintf(stderr, "Error in line %d - too many operands in line\n", line_number);
+		fprintf(stderr, "Error in line %d - end of line expected after matching number of operands\n", line_number);
 		return;
 	}
 
@@ -1058,6 +1154,14 @@ int line_is_empty(char *line)
 		
 }
 
+/* right_symbol_identation -
+	receives: the line to parse.
+	returns true of it starts with an empty place. */
+int right_symbol_identation(char* line)
+{
+	return !(line[0] == ' ' || line[0] == '\t');
+}
+
 /* parse_sentence - 
    receives: the line to be parsed and the current line number.
    The functions parses the line and populates the sentence structure (defined in data_structures.h) with the relevant fields.
@@ -1084,9 +1188,13 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_errors) {
 	 
 	last_position = get_next_word(current_word, line, -1);
 	if (is_symbol(current_word, line_number, syntax_errors, TRUE,TRUE)) {  /* if so, set is_symbol to 1, copy it to current_symbol and get the  
-
 							next word into current_word */
-					
+		if (!right_symbol_identation(line))
+		{
+			fprintf(stderr, "Error in line %d - symbol doesn't start in 1st column\n", line_number);
+			*syntax_errors = TRUE;
+			return parsed;
+		}
 			parsed->is_symbol = 1; 			
 			strcpy(parsed->symbol,current_word);
 			last_position = get_next_word(current_word,line,last_position);
@@ -1101,16 +1209,22 @@ sentence * parse_sentence(char *line, int line_number, int *syntax_errors) {
 
 	else if (is_extern_or_entry_command(current_word)) {
 		parsed->is_store_command = 0;
-		if (strcmp(current_word,"extern")==0)
+		if (strcmp_lower(current_word,"extern")==0)
 			parsed->guidance_command = EXTERN;
 		else
 			parsed->guidance_command = ENTRY;
 		
 		last_position = get_next_word(current_word,line,last_position);
 		
-		if (is_symbol(current_word, line_number, syntax_errors, FALSE,TRUE)) { 
+		if (is_current_word_empty(current_word))
+		{
+			fprintf(stderr, "Error in line %d - missing symbol after guidance command\n", line_number);
+			*syntax_errors = TRUE;
+			return parsed;
+		}
+		else if (is_symbol(current_word, line_number, syntax_errors, FALSE,TRUE)) { 
 			if (parsed->is_symbol==1) 
-			 	fprintf(stderr, "Warning in line %d: the line has both symbol and extern declaration\n", line_number);
+			 	fprintf(stderr, "Warning in line %d - the line has both symbol and extern declaration\n", line_number);
 			strcpy(parsed->symbol,current_word);
 		}
 	}
